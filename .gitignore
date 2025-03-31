@@ -1,5 +1,5 @@
 # Ignore large model files
-PythonBackend/diet_model_finetuned/pytorch_model.bin
+PythonBackend/diet_model_finetuned/
 PythonBackend/diet_model_output/
 *.bin
 *.pt
