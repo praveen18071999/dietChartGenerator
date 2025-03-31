@@ -1,0 +1,3 @@
+PythonBackend/diet_model_finetuned/pytorch_model.bin
+PythonBackend/diet_model_output/checkpoint-13500/optimizer.pt
+PythonBackend/diet_model_output/checkpoint-*/
