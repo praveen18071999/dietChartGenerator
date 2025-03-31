@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  # NestJS Backend service
+  nestjs-backend:
+    build:
+      context: ./NestJSBackend/diet-chart-generator
+      dockerfile: Dockerfile
+    container_name: diet-chart-nestjs
+    ports:
+      - "3002:3001"  # Map container port 3001 to host port 3002
+    environment:
+      - NODE_ENV=production
+      - PYTHON_API_URL=http://python-backend:8000
+    depends_on:
+      - python-backend
+    networks:
+      - diet-chart-network
+    restart: unless-stopped
+
+  # Python Backend with AI Model
+  python-backend:
+    build:
+      context: ./PythonBackend
+      dockerfile: Dockerfile
+    container_name: diet-chart-python
+    ports:
+      - "8080:8000"  # Map container port 8000 to host port 8080
+    environment:
+      - GEMINI_API_KEY=AIzaSyDEog2TdCfQPOl-xfNH_5IidvCgONNVz5Y
+    volumes:
+      - ./PythonBackend/diet_model_finetuned:/app/diet_model_finetuned
+    networks:
+      - diet-chart-network
+    restart: unless-stopped
+
+networks:
+  diet-chart-network:
+    driver: bridge
+
+# Remove this if you don't actually need it
+# volumes:
+#   model-data:
