@@ -1,3 +1,9 @@
+# Ignore large model files
 PythonBackend/diet_model_finetuned/pytorch_model.bin
-PythonBackend/diet_model_output/checkpoint-13500/optimizer.pt
-PythonBackend/diet_model_output/checkpoint-*/
+PythonBackend/diet_model_output/
+*.bin
+*.pt
+# Add other patterns as needed
+__pycache__/
+*.pyc
+node_modules/
