@@ -7,3 +7,5 @@ PythonBackend/diet_model_output/
 __pycache__/
 *.pyc
 node_modules/
+frontend/.next
+frontend/node_modules
