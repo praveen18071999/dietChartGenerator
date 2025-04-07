@@ -10,6 +10,7 @@ import {
   GalleryVerticalEnd,
   Map,
   PieChart,
+  SearchCheck,
   Settings2,
   SquareTerminal,
 } from "lucide-react"
@@ -52,108 +53,97 @@ const data = {
   ],
   navMain: [
     {
-      title: "Playground",
+      title: "Dashboard",
       url: "#",
       icon: SquareTerminal,
       isActive: true,
       items: [
         {
-          title: "History",
+          title: "Profile",
           url: "#",
         },
         {
-          title: "Starred",
+          title: "Progress",
           url: "#",
         },
         {
-          title: "Settings",
+          title: "Blogs",
           url: "#",
         },
       ],
     },
     {
-      title: "Models",
+      title: "Generate Diet Plan",
       url: "#",
       icon: Bot,
       items: [
         {
-          title: "Genesis",
+          title: "My Reports",
           url: "#",
         },
         {
-          title: "Explorer",
+          title: "Diet Plan",
           url: "#",
         },
-        {
-          title: "Quantum",
-          url: "#",
-        },
+        
       ],
     },
     {
-      title: "Documentation",
+      title: "History",
       url: "#",
       icon: BookOpen,
       items: [
         {
-          title: "Introduction",
+          title: "Medical History",
           url: "#",
         },
         {
-          title: "Get Started",
+          title: "Diet Plan History",
           url: "#",
         },
         {
-          title: "Tutorials",
+          title: "Diet Order History",
           url: "#",
         },
         {
-          title: "Changelog",
+          title: "Payment History",
           url: "#",
         },
       ],
     },
     {
-      title: "Settings",
+      title: "Our Experts",
       url: "#",
-      icon: Settings2,
+      icon: SearchCheck,
       items: [
         {
-          title: "General",
+          title: "Doctors",
           url: "#",
         },
         {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
+          title: "Trainers",
           url: "#",
         },
       ],
     },
   ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
-    },
-  ],
+  // projects: [
+  //   {
+  //     name: "Design Engineering",
+  //     url: "#",
+  //     icon: Frame,
+  //   },
+  //   {
+  //     name: "Sales & Marketing",
+  //     url: "#",
+  //     icon: PieChart,
+  //   },
+  //   {
+  //     name: "Travel",
+  //     url: "#",
+  //     icon: Map,
+  //   },
+  // ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -164,7 +154,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
