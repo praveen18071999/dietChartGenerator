@@ -26,7 +26,7 @@ export default function Header() {
         scrollPosition > 10 ? "bg-background/80 backdrop-blur-md border-b" : "bg-background",
       )}
     >
-      <div className="container flex h-16 items-center justify-between">
+      <div className="container mx-auto flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
           <Salad className="h-6 w-6 text-primary" />
           <span className="text-xl font-bold tracking-tight">NutriAI</span>

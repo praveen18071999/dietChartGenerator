@@ -42,7 +42,7 @@ export default function Footer() {
   return (
     <footer className="w-full border-t bg-background/50 backdrop-blur-sm">
       <div className="container flex flex-col gap-8 py-12">
-        <div className="flex flex-col gap-6 md:flex-row md:justify-between">
+        <div className="mx-auto flex flex-col gap-6 md:flex-row md:justify-between">
           <div className="flex flex-col gap-3 md:max-w-xs">
             <div className="flex items-center gap-2">
               <Salad className="h-6 w-6 text-primary" />

@@ -34,7 +34,7 @@ export default function HowItWorksSection() {
   
           <div className="relative mx-auto max-w-5xl py-12">
             {/* Connection line */}
-            <div className="absolute left-1/2 top-0 h-full w-0.5 -translate-x-1/2 bg-border md:block hidden"></div>
+            {/* <div className="absolute left-1/2 top-0 h-full w-0.5 -translate-x-1/2 bg-border md:block hidden"></div> */}
   
             <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
               {steps.map((step, index) => (

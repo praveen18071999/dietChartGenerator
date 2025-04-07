@@ -9,7 +9,7 @@ import CtaSection from "@/components/sections/cta-section"
 
 export default function LandingPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-background justify-center items-center">
       <Header />
       <main className="flex-1">
         <HeroSection />

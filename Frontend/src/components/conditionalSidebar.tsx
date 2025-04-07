@@ -6,9 +6,9 @@ import { AppSidebar } from "@/components/app-sidebar";
 
 export function ConditionalSidebar({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const showSidebar = pathname === "/" || pathname.startsWith("/login") || pathname.startsWith("/signup");
+  const starterPagePath = pathname === "/" || pathname.startsWith("/login") || pathname.startsWith("/signup");
   
-  if (!showSidebar) {
+  if (!starterPagePath) {
     return (
       <SidebarProvider>
         <AppSidebar />

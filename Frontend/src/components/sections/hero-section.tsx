@@ -36,7 +36,7 @@ export default function HeroSection() {
           <div className="relative mt-8 lg:mt-0">
             <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-primary to-primary/50 opacity-30 blur-xl"></div>
             <Image
-              src="/placeholder.svg?height=550&width=550"
+              src="/starterPagePhoto.svg?height=550&width=550"
               width={550}
               height={550}
               alt="AI Diet Planning Dashboard"
