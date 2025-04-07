@@ -1,0 +1,11 @@
+# Ignore large model files
+PythonBackend/diet_model_finetuned/
+PythonBackend/diet_model_output/
+*.bin
+*.pt
+# Add other patterns as needed
+__pycache__/
+*.pyc
+node_modules/
+frontend/.next
+frontend/node_modules
