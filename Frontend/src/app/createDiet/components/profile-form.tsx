@@ -14,6 +14,7 @@ import type { UserProfile } from "../hooks/use-diet-plan"
 const formSchema = z.object({
   height: z.string().min(1, { message: "Height is required" }),
   weight: z.string().min(1, { message: "Weight is required" }),
+  age: z.string().min(1, { message: "Age is required" }),
   goal: z.enum(["weight loss", "weight gain", "lean muscle", "maintenance"]),
   gender: z.enum(["male", "female", "other"]),
   activityLevel: z.enum(["none", "light", "moderate", "high", "very high"]),
@@ -42,6 +43,7 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress }: Prof
     defaultValues: {
       height: "",
       weight: "",
+      age: "",
       goal: "lean muscle",
       gender: "male",
       activityLevel: "none",
@@ -54,6 +56,7 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress }: Prof
     onSubmit({
       height: values.height,
       weight: values.weight,
+      age: values.age,
       gender: values.gender,
       goal: values.goal,
       activityLevel: values.activityLevel,
@@ -90,8 +93,21 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress }: Prof
                 </FormControl>
                 <FormMessage />
               </FormItem>
+            )} />
+          <FormField
+            control={form.control}
+            name="age"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-lg">Age</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g. 25" {...field} className="h-14 text-lg" type="number" min="1" max="120" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
           />
+
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

@@ -39,11 +39,13 @@ class DietPlanRequest(BaseModel):
     age: int = Field(..., description="User's age", example=30)
     goal: str = Field(..., description="User's diet goal", example="Weight loss")
     restrictions: Optional[str] = Field(None, description="Dietary restrictions", example="No dairy")
-    diseases: Optional[str] = Field(None, description="Medical conditions", example="None")
+    diseases: Optional[List[str]] = Field(None, description="Medical conditions", example=["Diabetes", "Hypertension"])
     activity_level: Optional[str] = Field("Moderate", description="Activity level", example="Moderate")
     gender: Optional[str] = Field(None, description="User's gender", example="Male")
-    height: Optional[int] = Field(None, description="User's height in cm", example=175)
-    weight: Optional[int] = Field(None, description="User's weight in kg", example=70)
+    height: Optional[str] = Field(None, description="User's height", example="175cm")
+    weight: Optional[str] = Field(None, description="User's weight", example="70kg")
+    otherDisease: Optional[str] = Field(None, description="Other diseases not in list", example="Celiac disease")
+    age: Optional[int] = Field(None, description="User's age", example=30)
 
 # Define response model
 class DietPlanResponse(BaseModel):
@@ -88,6 +90,7 @@ def read_root():
 
 @app.post("/generate-diet-plan", response_model=DietPlanResponse)
 async def generate_diet_plan(request: DietPlanRequest):
+    print(request)
     if model is None or tokenizer is None:
         raise HTTPException(status_code=503, detail="Model is not loaded")
     
@@ -107,6 +110,12 @@ async def generate_diet_plan(request: DietPlanRequest):
             input_text += f", Height: {request.height}cm"
         if request.weight:
             input_text += f", Weight: {request.weight}kg"
+        if request.goal:
+            input_text += f", Goal: {request.goal}"
+        if request.age:
+            input_text += f", Age: {request.age} years"
+        if request.otherDisease:
+            input_text += f", Other diseases: {request.otherDisease}"
             
         # Create formatted prompt
         instruction = "Create a personalized diet plan based on the following details"

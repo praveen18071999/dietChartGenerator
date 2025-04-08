@@ -18,6 +18,7 @@ export type MealItem = {
 export type UserProfile = {
   height: string
   weight: string
+  age?: string
   gender: string
   goal: string
   activityLevel: string
@@ -137,110 +138,132 @@ export function useDietPlan() {
     return calculateTotals(allItems)
   }
 
-  const generateDietPlan = (profile: UserProfile) => {
-    profileRef.current = profile
-    console.log("Generating diet plan for profile:", profile)
-
-    setIsGenerating(true)
-    setGenerationProgress(0)
-
-    const interval = setInterval(() => {
-      setGenerationProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval)
-          return 100
-        }
-        return prev + 5
+  const generateDietPlan = async (profile: UserProfile) => {
+    try {
+      // Initialize state for generation
+      profileRef.current = profile
+      setIsGenerating(true)
+      setGenerationProgress(0)
+      console.log("Generating diet plan for profile:", profile)
+      
+      // Setup progress animation
+      const interval = setInterval(() => {
+        setGenerationProgress((prev) => {
+          if (prev >= 95) { // Cap at 95% until API returns
+            return 95
+          }
+          return prev + 5
+        })
+      }, 100)
+  
+      // Prepare API request data
+      const apiData = {
+        age: parseInt(profile.age || "0", 10),
+        gender: profile.gender,
+        height: profile.height,
+        weight: profile.weight,
+        goal: profile.goal,
+        activity_level: profile.activityLevel,
+        diseases: profile.diseases,
+        restrictions: "",
+        otherDisease: profile.otherDisease
+      }
+      
+      // Make API call
+      const response = await fetch("http://localhost:8080/generate-diet-plan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify(apiData)
       })
-    }, 100)
-
-    // In a real app, you would call an API to generate the diet plan
-    setTimeout(() => {
-      setDietPlan({
-        breakfast: [
-          {
-            id: "1",
-            name: "Oatmeal with berries",
-            quantity: "1 bowl",
-            calories: 350,
-            protein: 12,
-            carbs: 60,
-            fats: 7,
-            mealType: "breakfast",
-          },
-          {
-            id: "2",
-            name: "Greek yogurt",
-            quantity: "1 cup",
-            calories: 150,
-            protein: 20,
-            carbs: 8,
-            fats: 4,
-            mealType: "breakfast",
-          },
-        ],
-        lunch: [
-          {
-            id: "3",
-            name: "Grilled chicken salad",
-            quantity: "1 plate",
-            calories: 450,
-            protein: 40,
-            carbs: 20,
-            fats: 15,
-            mealType: "lunch",
-          },
-        ],
-        dinner: [
-          {
-            id: "4",
-            name: "Salmon with vegetables",
-            quantity: "200g",
-            calories: 500,
-            protein: 45,
-            carbs: 15,
-            fats: 25,
-            mealType: "dinner",
-          },
-          {
-            id: "5",
-            name: "Brown rice",
-            quantity: "1/2 cup",
-            calories: 150,
-            protein: 3,
-            carbs: 30,
-            fats: 1,
-            mealType: "dinner",
-          },
-        ],
-        snacks: [
-          {
-            id: "6",
-            name: "Protein shake",
-            quantity: "1 serving",
-            calories: 200,
-            protein: 30,
-            carbs: 10,
-            fats: 3,
-            mealType: "snacks",
-          },
-          {
-            id: "7",
-            name: "Almonds",
-            quantity: "30g",
-            calories: 180,
-            protein: 6,
-            carbs: 5,
-            fats: 15,
-            mealType: "snacks",
-          },
-        ],
-      })
-
-      setIsGenerating(false)
+  
+      if (!response.ok) {
+        throw new Error(`Network response was not ok: ${response.status}`)
+      }
+      //console.log("API response status:", response)
+      const apiResponse = await response.json()
+      //console.log("Raw API response:", apiResponse)
+  
+      // Transform API response to our app format
+      const transformedDietPlan = transformApiResponse(JSON.parse(apiResponse.diet_plan.replace('json', '').replace('```', '').replace('```', '')))
+      
+      // Update app state with the transformed data
+      setDietPlan(transformedDietPlan)
       setShowDietPlan(true)
+      setIsGenerating(false)
+      setGenerationProgress(100)
       clearInterval(interval)
-    }, 2000)
+      
+    } catch (error) {
+      console.error("Error generating diet plan:", error)
+      setIsGenerating(false)
+      // Optionally show an error message to the user
+      // You could use a toast notification here
+    }
+  }
+  
+  // Helper function to transform API response to app format
+  const transformApiResponse = (apiResponse: any) => {
+    // Initialize empty meal categories
+    const transformedPlan = {
+      breakfast: [] as MealItem[],
+      lunch: [] as MealItem[],
+      dinner: [] as MealItem[],
+      snacks: [] as MealItem[],
+    }
+    
+    try {
+      console.log("Transforming API response:", apiResponse)
+      // Extract daily targets for reference (could be used elsewhere in the app)
+      const dailyTargets = apiResponse.daily_targets
+      
+      // Process the first day's meal plan (can be expanded to handle multiple days)
+      if (apiResponse.meal_plan && apiResponse.meal_plan.length > 0) {
+        const day1 = apiResponse.meal_plan[0]
+        
+        day1.meals.forEach((meal: any) => {
+          const mealType = meal.meal_type.toLowerCase()
+          
+          // Map API meal types to our app meal types
+          let appMealType: keyof typeof transformedPlan = 'snacks' // Default
+          if (mealType.includes('breakfast')) appMealType = 'breakfast'
+          else if (mealType.includes('lunch')) appMealType = 'lunch'
+          else if (mealType.includes('dinner')) appMealType = 'dinner'
+          else if (mealType.includes('dessert') || mealType.includes('snack')) appMealType = 'snacks'
+          
+          // Process foods in this meal
+          let idCounter = 0
+          meal.foods.forEach((food: any, index: number) => {
+            idCounter++;
+            const mealItem: MealItem = {
+              id: `${appMealType}-${Date.now()}-${idCounter}-${index}`, // Generate unique ID
+              name: food.name,
+              quantity: food.portion || "1 serving",
+              calories: food.calories || 0,
+              protein: food.protein || 0,
+              carbs: food.carbs || 0,
+              fats: food.fats || 0,
+              mealType: appMealType,
+              deliveryTime: deliveryTimes[appMealType as keyof typeof deliveryTimes]
+            }
+            
+            // Add to the appropriate meal category
+            if (transformedPlan[appMealType as keyof typeof transformedPlan]) {
+              transformedPlan[appMealType].push(mealItem)
+            }
+          })
+        })
+      }
+      console.log("Transformed diet plan:", transformedPlan)
+      return transformedPlan
+      
+    } catch (error) {
+      console.error("Error transforming API response:", error)
+      // Return default structure if transformation fails
+      return transformedPlan
+    }
   }
 
   return {
