@@ -68,7 +68,7 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress }: Prof
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <FormField
             control={form.control}
             name="height"
