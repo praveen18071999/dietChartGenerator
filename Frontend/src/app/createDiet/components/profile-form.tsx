@@ -68,7 +68,7 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress }: Prof
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <FormField
             control={form.control}
             name="height"
@@ -119,7 +119,7 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress }: Prof
                 <FormLabel className="text-lg">Gender</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger className="h-14 text-lg">
+                    <SelectTrigger className="h-14 text-lg w-full sm:w-64 truncate">
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
                   </FormControl>
@@ -147,7 +147,7 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress }: Prof
                 <FormLabel className="text-lg">Goal</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger className="h-14 text-lg">
+                    <SelectTrigger className="h-14 text-lg w-full sm:w-64 truncate">
                       <SelectValue placeholder="Select goal" />
                     </SelectTrigger>
                   </FormControl>
@@ -178,7 +178,7 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress }: Prof
                 <FormLabel className="text-lg">Activity Level</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger className="h-14 text-lg">
+                    <SelectTrigger className="h-14 text-lg w-full sm:w-64 truncate">
                       <SelectValue placeholder="Select activity level" />
                     </SelectTrigger>
                   </FormControl>
