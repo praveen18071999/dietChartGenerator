@@ -26,8 +26,10 @@ const diseases = [
   { id: "lactose", label: "Lactose Intolerance" },
 ]
 
-export default function DietPlanner() {
+export default function DietPlanner(dietId: string) {
   const router = useRouter()
+  console.log("Diet ID:", dietId)
+  console.log(dietId.length)
 
   const {
     profileRef,
@@ -45,7 +47,13 @@ export default function DietPlanner() {
     calculateTotals,
     calculateDailyTotals,
     generateDietPlan,
-  } = useDietPlan()
+    saveDietPlan,
+    updateDietPlan,
+    hasDietChanged,
+    setHasDietChanged, // Add this line
+    originalDietPlan, // Add this line
+    setOriginalDietPlan, // Add this line
+  } = useDietPlan(dietId)
 
   const { cartItems, showCartDialog, setShowCartDialog, addToCart, removeFromCart, getTotalCartPrice } = useCart()
 
@@ -77,7 +85,8 @@ export default function DietPlanner() {
   }
 
   return (
-    <div className="space-y-10">
+    <div className="flex flex-col flex-grow w-full h-full min-h-screen bg-white overflow-hidden px-4 py-6">
+      <div className="max-w-full mx-auto w-full space-y-10">
       <Card className="border-2 shadow-xl">
         <CardHeader className="pb-6">
           <div className="flex items-center gap-3">
@@ -100,6 +109,7 @@ export default function DietPlanner() {
             onSubmit={generateDietPlan}
             isGenerating={isGenerating}
             generationProgress={generationProgress}
+            initialProfile={profileRef.current}
           />
         </CardContent>
       </Card>
@@ -146,11 +156,31 @@ export default function DietPlanner() {
             <ProfessionalCards onStartChat={startChat} />
           </CardContent>
           <CardFooter className="flex justify-between">
-            <Button variant="outline" className="flex items-center gap-2 h-12 text-lg">
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 h-12 text-lg"
+              onClick={handleShareDietPlan}
+            >
               <Share2 className="h-5 w-5" />
               Share Diet Plan
             </Button>
-            <Button className="bg-purple-600 hover:bg-purple-500 text-white h-12 text-lg">Save Diet Plan</Button>
+            {dietId.dietId ? (
+              <Button
+                className="bg-purple-600 hover:bg-purple-500 text-white h-12 text-lg"
+                onClick={() => updateDietPlan()}
+                disabled={!hasDietChanged}
+              >
+                Update Diet Plan
+              </Button>
+            ) : (
+              <Button
+                className="bg-purple-600 hover:bg-purple-500 text-white h-12 text-lg"
+                onClick={() => saveDietPlan(dietDuration)}
+                disabled={isGenerating || !hasDietChanged}
+              >
+                Save Diet Plan
+              </Button>
+            )}
           </CardFooter>
         </Card>
       )}
@@ -174,6 +204,7 @@ export default function DietPlanner() {
         handleChatSubmit={handleChatSubmit}
         shareDietPlan={handleShareDietPlan}
       />
+    </div>
     </div>
   )
 }

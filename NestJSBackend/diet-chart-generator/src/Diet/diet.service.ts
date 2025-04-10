@@ -1,21 +1,26 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { SupabaseService } from 'src/Database/database.service';
+import { UserSpecificationService } from 'src/UserSpecifications/userspec.service';
 
 @Injectable()
 export class DietService {
   private readonly logger = new Logger(DietService.name);
 
-  constructor(private readonly databaseService: SupabaseService) {}
+  constructor(
+    private readonly databaseService: SupabaseService,
+    private readonly userSpecificationService: UserSpecificationService,
+  ) {}
 
   async createDietChart(userid: string, dietData: any): Promise<any> {
     try {
       const supabase = this.databaseService.getClient();
       const { data, error } = await supabase
         .from('Diet')
-        .insert([{ generatedBy: userid, diet: dietData.diet }])
+        .insert([
+          { generatedBy: userid, diet: dietData.diet, days: dietData.days },
+        ])
         .select();
 
       if (error) {
@@ -151,9 +156,28 @@ export class DietService {
   async updateDietChart(userid: string, dietData: any): Promise<any> {
     try {
       const supabase = this.databaseService.getClient();
+
+      // Create update object dynamically based on provided data
+      const updateObj: any = {};
+
+      // Always include diet if provided
+      if (dietData.diet !== undefined) {
+        updateObj.diet = dietData.diet;
+      }
+
+      // Only include days if it's provided
+      if (dietData.days !== undefined) {
+        updateObj.days = dietData.days;
+      }
+
+      // Log the update operation for debugging
+      this.logger.log(
+        `Updating diet chart for user ${userid} with data: ${JSON.stringify(updateObj)}`,
+      );
+
       const { data, error } = await supabase
         .from('Diet')
-        .update({ diet: dietData.diet })
+        .update(updateObj)
         .eq('generatedBy', userid)
         .select();
 
@@ -205,7 +229,7 @@ export class DietService {
       const supabase = this.databaseService.getClient();
       const { data, error } = await supabase
         .from('Diet')
-        .update({ diet: dietData.diet })
+        .update({ diet: dietData.diet, days: dietData.days })
         .eq('id', id)
         .select();
 
@@ -229,7 +253,11 @@ export class DietService {
           data: [],
         };
       }
-
+      console.log('Diet Data:', dietData);
+      await this.userSpecificationService.updateUserSpecification(
+        id,
+        dietData.profile,
+      );
       return {
         statusCode: HttpStatus.OK,
         message: 'Diet chart updated successfully',
@@ -257,7 +285,12 @@ export class DietService {
       const supabase = this.databaseService.getClient();
       const { data, error } = await supabase
         .from('Diet')
-        .select('*')
+        .select(
+          `
+        *,
+        "User Specifications"(*)
+      `,
+        )
         .eq('id', id);
 
       if (error) {

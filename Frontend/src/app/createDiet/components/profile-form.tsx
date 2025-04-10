@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Progress } from "@/components/ui/progress"
 import type { UserProfile } from "../hooks/use-diet-plan"
+import { useEffect } from "react"
 
 const formSchema = z.object({
   height: z.string().min(1, { message: "Height is required" }),
@@ -35,23 +36,47 @@ interface ProfileFormProps {
   onSubmit: (values: UserProfile) => void
   isGenerating: boolean
   generationProgress: number
+  initialProfile?: UserProfile
+  updateProfileField?: (field: keyof UserProfile, value: any) => void
 }
 
-export function ProfileForm({ onSubmit, isGenerating, generationProgress }: ProfileFormProps) {
+export function ProfileForm({ onSubmit, isGenerating, generationProgress, initialProfile, updateProfileField }: ProfileFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      height: "",
-      weight: "",
-      age: "",
-      goal: "lean muscle",
-      gender: "male",
-      activityLevel: "none",
-      diseases: [],
-      otherDisease: "",
+      height: initialProfile?.height || "",
+      weight: initialProfile?.weight || "",
+      age: initialProfile?.age || "",
+      goal: (initialProfile?.goal as "weight loss" | "weight gain" | "lean muscle" | "maintenance") || "lean muscle",
+      gender: (initialProfile?.gender as "male" | "female" | "other") || "male",
+      activityLevel: (initialProfile?.activityLevel as "none" | "light" | "moderate" | "high" | "very high") || "none",
+      diseases: initialProfile?.diseases || [],
+      otherDisease: initialProfile?.otherDisease || "",
     },
   })
+  useEffect(() => {
+    if (initialProfile) {
+      console.log("Setting form values from initialProfile:", initialProfile);
+      form.reset({
+        height: initialProfile.height || "",
+        weight: initialProfile.weight || "",
+        age: initialProfile.age || "",
+        goal: initialProfile.goal as any || "lean muscle",
+        gender: initialProfile.gender as any || "male",
+        activityLevel: initialProfile.activityLevel as any || "none",
+        diseases: initialProfile.diseases || [],
+        otherDisease: initialProfile.otherDisease || "",
+      });
+    }
+  }, [initialProfile, form]);
 
+  const handleFieldChange = (field: keyof UserProfile, value: any) => {
+    if (updateProfileField) {
+      updateProfileField(field, value);
+    }
+  };
+
+  console.log("Initial Profile:", initialProfile)
   const handleSubmit = (values: z.infer<typeof formSchema>) => {
     onSubmit({
       height: values.height,
@@ -76,7 +101,10 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress }: Prof
               <FormItem>
                 <FormLabel className="text-lg">Height</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. 5.10 ft or 178 cm" {...field} className="h-14 text-lg" />
+                  <Input placeholder="e.g. 5.10 ft or 178 cm" {...field} className="h-14 text-lg" onChange={(e) => {
+                    field.onChange(e);
+                    handleFieldChange('height', e.target.value);
+                  }}/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -89,7 +117,10 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress }: Prof
               <FormItem>
                 <FormLabel className="text-lg">Weight</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. 75 kg or 165 lbs" {...field} className="h-14 text-lg" />
+                  <Input placeholder="e.g. 75 kg or 165 lbs" {...field} className="h-14 text-lg" onChange={(e) => {
+                    field.onChange(e);
+                    handleFieldChange('weight', e.target.value);
+                  }}/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -101,7 +132,10 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress }: Prof
               <FormItem>
                 <FormLabel className="text-lg">Age</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. 25" {...field} className="h-14 text-lg" type="number" min="1" max="120" />
+                  <Input placeholder="e.g. 25" {...field} className="h-14 text-lg" type="number" min="1" max="120" onChange={(e) => {
+                    field.onChange(e);
+                    handleFieldChange('age', e.target.value);
+                  }}/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -117,7 +151,13 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress }: Prof
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-lg">Gender</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select 
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    handleFieldChange('gender', value);
+                  }} 
+                  value={field.value}
+                >
                   <FormControl>
                     <SelectTrigger className="h-14 text-lg">
                       <SelectValue placeholder="Select gender" />
@@ -145,7 +185,13 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress }: Prof
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-lg">Goal</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select 
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    handleFieldChange('goal', value);
+                  }} 
+                  value={field.value}
+                >
                   <FormControl>
                     <SelectTrigger className="h-14 text-lg">
                       <SelectValue placeholder="Select goal" />
@@ -176,7 +222,13 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress }: Prof
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-lg">Activity Level</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select 
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    handleFieldChange('activityLevel', value);
+                  }} 
+                  value={field.value}
+                >
                   <FormControl>
                     <SelectTrigger className="h-14 text-lg">
                       <SelectValue placeholder="Select activity level" />
@@ -233,9 +285,11 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress }: Prof
                             <Checkbox
                               checked={field.value?.includes(disease.id)}
                               onCheckedChange={(checked) => {
-                                return checked
-                                  ? field.onChange([...(field.value || []), disease.id])
-                                  : field.onChange(field.value?.filter((value) => value !== disease.id))
+                                const updatedValue = checked
+                                  ? [...(field.value || []), disease.id]
+                                  : field.value?.filter((value) => value !== disease.id);
+                                field.onChange(updatedValue);
+                                handleFieldChange('diseases', updatedValue);
                               }}
                               className="h-6 w-6"
                             />
@@ -257,7 +311,10 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress }: Prof
                     <FormItem>
                       <FormLabel className="text-lg">Other Health Condition</FormLabel>
                       <FormControl>
-                        <Input placeholder="Specify any other health condition" {...field} className="h-14 text-lg" />
+                        <Input placeholder="Specify any other health condition" {...field} className="h-14 text-lg" onChange={(e) => {
+                          field.onChange(e);
+                          handleFieldChange('otherDisease', e.target.value);
+                        }}/>
                       </FormControl>
                       <FormDescription className="text-base">
                         If you have any other health condition not listed above, please specify it here
@@ -293,4 +350,3 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress }: Prof
     </Form>
   )
 }
-

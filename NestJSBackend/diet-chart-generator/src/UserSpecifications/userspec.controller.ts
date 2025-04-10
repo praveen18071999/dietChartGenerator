@@ -21,6 +21,7 @@ export class UserSpecificationController {
     @Param('dietId') dietId: string,
     @Body() body: any,
   ): Promise<any> {
+    console.log('Body:', body);
     return this.userspecService.createUserSpecification(dietId, body);
   }
   @Get('getUserSpecification/:dietId')

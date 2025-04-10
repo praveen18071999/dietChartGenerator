@@ -19,7 +19,7 @@ import { JwtAuthGuard } from 'src/authGaurd/jwt-authgaurd';
 export class DietController {
   constructor(private readonly dietService: DietService) {}
 
-  @Post('createDietChart')
+  @Post('createDietPlan')
   async createDietChart(@Req() req: any, @Body() dietData: any): Promise<any> {
     console.log(req.user);
     const userId = req.user.userid; // Assuming user ID is available in the request

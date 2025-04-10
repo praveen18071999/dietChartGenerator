@@ -12,6 +12,7 @@ export class UserSpecificationService {
 
   async createUserSpecification(diet: string, body: any) {
     try {
+      //console.log(body.profile)
       // Validate required fields
       const requiredFields = [
         'height',
@@ -38,10 +39,9 @@ export class UserSpecificationService {
         goal,
         gender,
         activityLevel,
-        diabetes,
-        bloodPressure,
-        heartDisease,
-        asthama,
+        age,
+        diseases,
+        otherDisease,
       } = body;
 
       const supabase = this.databaseService.getClient();
@@ -55,10 +55,9 @@ export class UserSpecificationService {
             goal,
             gender,
             activityLevel,
-            diabetes: diabetes || false,
-            bloodPressure: bloodPressure || false,
-            heartDisease: heartDisease || false,
-            asthama: asthama || false,
+            age,
+            diseases,
+            otherDisease,
             diet,
           },
         ])

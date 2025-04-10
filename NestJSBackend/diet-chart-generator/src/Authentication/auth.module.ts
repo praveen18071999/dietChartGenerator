@@ -13,12 +13,12 @@ import { JwtStrategy } from '../authGaurd/jwt.strategy';
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: 'filmraft',
+      secret: 'dietchart',
       signOptions: { expiresIn: '24h' },
     }),
   ],
   controllers: [AuthController],
   providers: [AuthService, SupabaseService, ConfigService, JwtStrategy],
-  exports: [],
+  exports: [JwtStrategy, PassportModule],
 })
 export class AuthModule {}
