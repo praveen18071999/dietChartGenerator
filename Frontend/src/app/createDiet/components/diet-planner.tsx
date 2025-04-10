@@ -26,7 +26,7 @@ const diseases = [
   { id: "lactose", label: "Lactose Intolerance" },
 ]
 
-export default function DietPlanner(dietId: string) {
+export default function DietPlanner(dietId: any) {
   const router = useRouter()
   console.log("Diet ID:", dietId)
   console.log(dietId.length)

@@ -1,10 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { profile } from "console";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useCallback, useEffect } from "react";
-import React from "react";
-import { set } from "react-hook-form";
 
 export type MealItem = {
   id: string;
@@ -56,7 +53,7 @@ export const mealColors = {
   },
 };
 
-export function useDietPlan(dietId) {
+export function useDietPlan(dietId: { dietId: string }) {
   console.log("Diet ID:", dietId);
   const profileRef = useRef<UserProfile>({
     height: "",
@@ -301,7 +298,7 @@ export function useDietPlan(dietId) {
     }
   };
 
-  const createUserSpecification = async (id) => {
+  const createUserSpecification = async (id: string) => {
     const apiData = profileRef.current;
 
     const response = await fetch(
@@ -325,7 +322,7 @@ export function useDietPlan(dietId) {
     console.log("Diet plan saved successfully:", data);
     //createUserSpecification();
   };
-  const createdDiet = async(id) => {
+  const createdDiet = async(id:string) => {
     try {
       const response = await fetch(
         `http://localhost:3001/diet/getDietChartById/${id}`,
@@ -386,7 +383,7 @@ export function useDietPlan(dietId) {
   };
 
   useEffect(() => {
-    if(dietId.dietId)
+    if (dietId.dietId)
     {
       console.log("Diet ID from useEffect:", dietId);
       createdDiet(dietId.dietId);
