@@ -1,7 +1,86 @@
+'use client'
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronRight } from "lucide-react"
+import { number } from "zod"
 
 export default function CtaSection() {
+  const [isPopupOpen, setIsPopupOpen] = useState(false)
+  const [isLoginMode, setIsLoginMode] = useState(true)
+  const [formData, setFormData] = useState({
+    name: "",
+    age: "",
+    email: "",
+    password: "",
+    phoneNumber: "",
+    goal: "",
+  })
+  const [errorMessage, setErrorMessage] = useState("")
+  const [successMessage, setSuccessMessage] = useState("")
+
+  const togglePopup = () => {
+    setIsPopupOpen(!isPopupOpen)
+    setErrorMessage("")
+    setSuccessMessage("")
+  }
+
+  const toggleMode = () => {
+    setIsLoginMode(!isLoginMode)
+    setErrorMessage("")
+    setSuccessMessage("")
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target
+    setFormData((prev) => ({
+      ...prev,
+      [id]: id === "age" ? (parseInt(value, 10) || "") : value, // Parse age as an integer
+    }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setErrorMessage("")
+    setSuccessMessage("")
+
+    // Validate age
+    if (!isLoginMode && parseInt(formData.age, 10) <= 13) {
+      setErrorMessage("Age must be greater than 13.")
+      return
+    }
+
+    const url = isLoginMode ? "http://localhost:3002/auth/login" : "http://localhost:3002/auth/signup" // Replace with your API endpoints
+    const payload = isLoginMode
+      ? { email: formData.email, password: formData.password }
+      : { ...formData, age: parseInt(formData.age, 10) } // Ensure age is sent as an integer
+    console.log("Payload for API request:");
+    console.log(payload);
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+      const contentType = response.headers.get("Content-Type");
+      if (!response.ok) {
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Something went wrong");
+        } else {
+          throw new Error("Unexpected response from the server");
+        }
+      }
+
+      const data = await response.json();
+      setSuccessMessage(isLoginMode ? "Login successful!" : "Signup successful!");
+      console.log(data); // Handle the response data as needed
+    } catch (error: any) {
+      setErrorMessage(error.message);
+    }
+  };
+
   return (
     <section id="get-started" className="w-full py-12 md:py-24 lg:py-32">
       <div className="container px-4 md:px-6">
@@ -21,13 +100,150 @@ export default function CtaSection() {
                 Join thousands of users who have improved their health with personalized AI nutrition plans
               </p>
             </div>
-            <Button size="lg" variant="secondary" className="mt-4 rounded-full text-primary hover:text-primary">
+            <Button
+              size="lg"
+              variant="secondary"
+              className="mt-4 rounded-full text-primary hover:text-primary"
+              onClick={togglePopup}
+            >
               Create Your Account <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </div>
       </div>
+
+      {/* Popup */}
+      {isPopupOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-[90%] max-w-md">
+            <h3 className="text-xl font-bold mb-4">
+              {isLoginMode ? "Login" : "Signup"}
+            </h3>
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              {!isLoginMode && (
+                <>
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                      placeholder="Enter your name"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="age" className="block text-sm font-medium text-gray-700">
+                      Age
+                    </label>
+                    <input
+                      type="number"
+                      id="age"
+                      value={formData.age}
+                      onChange={handleInputChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                      placeholder="Enter your age"
+                    />
+                  </div>
+                </>
+              )}
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                  placeholder="Enter your email"
+                />
+              </div>
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                  placeholder="Enter your password"
+                />
+              </div>
+              {!isLoginMode && (
+                <>
+                  <div>
+                    <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
+                      Phone Number
+                    </label>
+                    <input
+                      type="text" // Keep this as "text" to allow flexibility for phone numbers
+                      id="phoneNumber"
+                      value={formData.phoneNumber}
+                      onChange={handleInputChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                      placeholder="Enter your phone number"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="goal" className="block text-sm font-medium text-gray-700">
+                      Goal
+                    </label>
+                    <input
+                      type="text"
+                      id="goal"
+                      value={formData.goal}
+                      onChange={handleInputChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                      placeholder="Enter your goal (e.g., weight loss)"
+                    />
+                  </div>
+                </>
+              )}
+              <Button type="submit" size="lg" variant="default" className="w-full">
+                {isLoginMode ? "Login" : "Signup"}
+              </Button>
+            </form>
+            {errorMessage && <p className="mt-2 text-sm text-red-600">{errorMessage}</p>}
+            {successMessage && <p className="mt-2 text-sm text-green-600">{successMessage}</p>}
+            <div className="mt-4 text-sm text-center">
+              {isLoginMode ? (
+                <>
+                  Don't have an account?{" "}
+                  <button
+                    onClick={toggleMode}
+                    className="text-primary hover:underline"
+                  >
+                    Signup
+                  </button>
+                </>
+              ) : (
+                <>
+                  Already have an account?{" "}
+                  <button
+                    onClick={toggleMode}
+                    className="text-primary hover:underline"
+                  >
+                    Login
+                  </button>
+                </>
+              )}
+            </div>
+            <button
+              onClick={togglePopup}
+              className="mt-4 text-sm text-primary hover:underline"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   )
 }
-
