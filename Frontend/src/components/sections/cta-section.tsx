@@ -1,12 +1,14 @@
-'use client'
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { ChevronRight } from "lucide-react"
-import { number } from "zod"
+'use client' // Ensure this is at the top of the file to enable client-side rendering
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function CtaSection() {
-  const [isPopupOpen, setIsPopupOpen] = useState(false)
-  const [isLoginMode, setIsLoginMode] = useState(true)
+  const router = useRouter(); // Ensure useRouter is used at the top level of the component
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isLoginMode, setIsLoginMode] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
     age: "",
@@ -14,47 +16,50 @@ export default function CtaSection() {
     password: "",
     phoneNumber: "",
     goal: "",
-  })
-  const [errorMessage, setErrorMessage] = useState("")
-  const [successMessage, setSuccessMessage] = useState("")
+  });
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const togglePopup = () => {
-    setIsPopupOpen(!isPopupOpen)
-    setErrorMessage("")
-    setSuccessMessage("")
-  }
+    setIsPopupOpen(!isPopupOpen);
+    setErrorMessage("");
+    setSuccessMessage("");
+  };
 
   const toggleMode = () => {
-    setIsLoginMode(!isLoginMode)
-    setErrorMessage("")
-    setSuccessMessage("")
-  }
+    setIsLoginMode(!isLoginMode);
+    setErrorMessage("");
+    setSuccessMessage("");
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target
+    const { id, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [id]: id === "age" ? (parseInt(value, 10) || "") : value, // Parse age as an integer
-    }))
-  }
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setErrorMessage("")
-    setSuccessMessage("")
+    e.preventDefault();
+    setErrorMessage("");
+    setSuccessMessage("");
 
     // Validate age
     if (!isLoginMode && parseInt(formData.age, 10) <= 13) {
-      setErrorMessage("Age must be greater than 13.")
-      return
+      setErrorMessage("Age must be greater than 13.");
+      return;
     }
 
-    const url = isLoginMode ? "http://localhost:3002/auth/login" : "http://localhost:3002/auth/signup" // Replace with your API endpoints
+    const baseUrl = process.env.REACT_APP_API_BASE_URL || "http://localhost:3002";
+    const url = isLoginMode ? `${baseUrl}/auth/login` : `${baseUrl}/auth/signup`;
     const payload = isLoginMode
       ? { email: formData.email, password: formData.password }
-      : { ...formData, age: parseInt(formData.age, 10) } // Ensure age is sent as an integer
+      : { ...formData, age: parseInt(formData.age, 10) };
+
     console.log("Payload for API request:");
     console.log(payload);
+
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -62,7 +67,8 @@ export default function CtaSection() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
-      })
+      });
+
       const contentType = response.headers.get("Content-Type");
       if (!response.ok) {
         if (contentType && contentType.includes("application/json")) {
@@ -76,6 +82,9 @@ export default function CtaSection() {
       const data = await response.json();
       setSuccessMessage(isLoginMode ? "Login successful!" : "Signup successful!");
       console.log(data); // Handle the response data as needed
+
+      // Redirect to createDiet page on successful login or signup
+      router.push("/createDiet");
     } catch (error: any) {
       setErrorMessage(error.message);
     }
@@ -183,7 +192,7 @@ export default function CtaSection() {
                       Phone Number
                     </label>
                     <input
-                      type="text" // Keep this as "text" to allow flexibility for phone numbers
+                      type="text"
                       id="phoneNumber"
                       value={formData.phoneNumber}
                       onChange={handleInputChange}
@@ -245,5 +254,5 @@ export default function CtaSection() {
         </div>
       )}
     </section>
-  )
+  );
 }

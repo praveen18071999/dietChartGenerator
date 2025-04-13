@@ -9,3 +9,45 @@ __pycache__/
 node_modules/
 frontend/.next
 frontend/node_modules
+# Ignore environment files
+*.env
+# Ignore IDE specific files
+.idea/
+.vscode/
+# Ignore logs
+*.log
+# Ignore coverage reports
+coverage/
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+# Ignore temporary files
+*.tmp
+*.temp
+# Ignore macOS specific files
+.DS_Store
+# Ignore Windows specific files
+Thumbs.db
+# Ignore build artifacts
+build/
+dist/
+# Ignore test results
+test-results/
+# Ignore database files
+*.sqlite3
+# Ignore cache files
+.cache/
+# Ignore backup files
+*~
+# Ignore other common files
+*.bak
+*.swp
+# Ignore specific directories
+# Ignore frontend build artifacts
+frontend/build/
+# Ignore Python virtual environments
+venv/
+# Ignore Docker files
+Dockerfile
+docker-compose.yml
+# Ignore configuration files
+*.config
