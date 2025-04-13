@@ -2,10 +2,10 @@ import DietPlanner from "./components/diet-planner"
 
 export default function Home() {
   return (
-    <main className="min-h-screen w-full flex p-0 md:p-4 bg-gradient-to-b from-white to-gray-50">
-          <div className="flex-1 overflow-auto">
-            <DietPlanner dietId={""}/>
-          </div>
-        </main>
+    <main className="min-h-screen bg-gradient-to-b from-white to-gray-50 p-4 md:p-8 flex-1 w-full justify-end">
+      <div className="w-full max-w-7xl mx-auto">
+        <DietPlanner dietId={""} />
+      </div>
+    </main>
   )
 }

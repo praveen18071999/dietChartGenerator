@@ -236,67 +236,84 @@ export function useDietPlan(dietId: { dietId: string }) {
   };
 
   // Helper function to transform API response to app format
-  const transformApiResponse = (apiResponse: any) => {
-    // Initialize empty meal categories
-    const transformedPlan = {
-      breakfast: [] as MealItem[],
-      lunch: [] as MealItem[],
-      dinner: [] as MealItem[],
-      snacks: [] as MealItem[],
-    };
-
-    try {
-      console.log("Transforming API response:", apiResponse);
-      // Extract daily targets for reference (could be used elsewhere in the app)
-      const dailyTargets = apiResponse.daily_targets;
-
-      // Process the first day's meal plan (can be expanded to handle multiple days)
-      if (apiResponse.meal_plan && apiResponse.meal_plan.length > 0) {
-        const day1 = apiResponse.meal_plan[0];
-
-        day1.meals.forEach((meal: any) => {
-          const mealType = meal.meal_type.toLowerCase();
-
-          // Map API meal types to our app meal types
-          let appMealType: keyof typeof transformedPlan = "snacks"; // Default
-          if (mealType.includes("breakfast")) appMealType = "breakfast";
-          else if (mealType.includes("lunch")) appMealType = "lunch";
-          else if (mealType.includes("dinner")) appMealType = "dinner";
-          else if (mealType.includes("dessert") || mealType.includes("snack"))
-            appMealType = "snacks";
-
-          // Process foods in this meal
-          let idCounter = 0;
-          meal.foods.forEach((food: any, index: number) => {
-            idCounter++;
-            const mealItem: MealItem = {
-              id: `${appMealType}-${Date.now()}-${idCounter}-${index}`, // Generate unique ID
-              name: food.name,
-              quantity: food.portion || "1 serving",
-              calories: food.calories || 0,
-              protein: food.protein || 0,
-              carbs: food.carbs || 0,
-              fats: food.fats || 0,
-              mealType: appMealType,
-              deliveryTime:
-                deliveryTimes[appMealType as keyof typeof deliveryTimes],
-            };
-
-            // Add to the appropriate meal category
-            if (transformedPlan[appMealType as keyof typeof transformedPlan]) {
-              transformedPlan[appMealType].push(mealItem);
-            }
-          });
-        });
-      }
-      console.log("Transformed diet plan:", transformedPlan);
-      return transformedPlan;
-    } catch (error) {
-      console.error("Error transforming API response:", error);
-      // Return default structure if transformation fails
-      return transformedPlan;
-    }
+  // Helper function to transform API response to app format
+const transformApiResponse = (apiResponse: any) => {
+  // Initialize empty meal categories
+  const transformedPlan = {
+    breakfast: [] as MealItem[],
+    lunch: [] as MealItem[],
+    dinner: [] as MealItem[],
+    snacks: [] as MealItem[],
   };
+
+  // Track meal names we've already added to prevent duplicates
+  const addedMealNames: Record<string, Set<string>> = {
+    breakfast: new Set(),
+    lunch: new Set(),
+    dinner: new Set(),
+    snacks: new Set(),
+  };
+
+  try {
+    console.log("Transforming API response:", apiResponse);
+    // Extract daily targets for reference (could be used elsewhere in the app)
+    const dailyTargets = apiResponse.daily_targets;
+
+    // Process the first day's meal plan (can be expanded to handle multiple days)
+    if (apiResponse.meal_plan && apiResponse.meal_plan.length > 0) {
+      const day1 = apiResponse.meal_plan[0];
+      let globalIdCounter = 0;
+
+      day1.meals.forEach((meal: any) => {
+        const mealType = meal.meal_type.toLowerCase();
+
+        // Map API meal types to our app meal types
+        let appMealType: keyof typeof transformedPlan = "snacks"; // Default
+        if (mealType.includes("breakfast")) appMealType = "breakfast";
+        else if (mealType.includes("lunch")) appMealType = "lunch";
+        else if (mealType.includes("dinner")) appMealType = "dinner";
+        else if (mealType.includes("dessert") || mealType.includes("snack"))
+          appMealType = "snacks";
+
+        // Process foods in this meal
+        meal.foods.forEach((food: any, index: number) => {
+          globalIdCounter++;
+          
+          // Skip this food if it's already in this meal category
+          if (addedMealNames[appMealType].has(food.name.toLowerCase())) {
+            console.log(`Skipping duplicate food "${food.name}" in ${appMealType}`);
+            return;
+          }
+          
+          // Add to tracking set
+          addedMealNames[appMealType].add(food.name.toLowerCase());
+          
+          const mealItem: MealItem = {
+            id: `${appMealType}-${Date.now()}-${globalIdCounter}-${index}`, // Generate unique ID
+            name: food.name,
+            quantity: food.portion || "1 serving",
+            calories: food.calories || 0,
+            protein: food.protein || 0,
+            carbs: food.carbs || 0,
+            fats: food.fats || 0,
+            mealType: appMealType,
+            deliveryTime:
+              deliveryTimes[appMealType as keyof typeof deliveryTimes],
+          };
+
+          // Add to the appropriate meal category
+          transformedPlan[appMealType].push(mealItem);
+        });
+      });
+    }
+    console.log("Transformed diet plan:", transformedPlan);
+    return transformedPlan;
+  } catch (error) {
+    console.error("Error transforming API response:", error);
+    // Return default structure if transformation fails
+    return transformedPlan;
+  }
+};
 
   const createUserSpecification = async (id: string) => {
     const apiData = profileRef.current;
@@ -308,7 +325,7 @@ export function useDietPlan(dietId: { dietId: string }) {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkMmEzOTA3NC0wMWIzLTQ0MzctOTVjZi01MWRkNzE1NWNkOTEiLCJlbWFpbCI6ImExQGdtYWlsLmNvbSIsImlhdCI6MTc0NDIxODQxNSwiZXhwIjoxNzQ0MzA0ODE1fQ.LoqJWMlw1mnw4kITT9BhlaPQ4e7wRFGh0PD9QjF5AsY`,
+          Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkMmEzOTA3NC0wMWIzLTQ0MzctOTVjZi01MWRkNzE1NWNkOTEiLCJlbWFpbCI6ImExQGdtYWlsLmNvbSIsImlhdCI6MTc0NDMxNTE4OCwiZXhwIjoxNzQ0NDAxNTg4fQ.G7UiYIvGlRyth-2vrh-bq1MkWmr6qasVaWVdzEoXPMY`,
         },
         body: JSON.stringify(apiData),
       }
@@ -331,7 +348,7 @@ export function useDietPlan(dietId: { dietId: string }) {
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
-            Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkMmEzOTA3NC0wMWIzLTQ0MzctOTVjZi01MWRkNzE1NWNkOTEiLCJlbWFpbCI6ImExQGdtYWlsLmNvbSIsImlhdCI6MTc0NDIxODQxNSwiZXhwIjoxNzQ0MzA0ODE1fQ.LoqJWMlw1mnw4kITT9BhlaPQ4e7wRFGh0PD9QjF5AsY`,
+            Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkMmEzOTA3NC0wMWIzLTQ0MzctOTVjZi01MWRkNzE1NWNkOTEiLCJlbWFpbCI6ImExQGdtYWlsLmNvbSIsImlhdCI6MTc0NDMxNTE4OCwiZXhwIjoxNzQ0NDAxNTg4fQ.G7UiYIvGlRyth-2vrh-bq1MkWmr6qasVaWVdzEoXPMY`,
           }
         }
       );
@@ -402,7 +419,7 @@ export function useDietPlan(dietId: { dietId: string }) {
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
-            Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkMmEzOTA3NC0wMWIzLTQ0MzctOTVjZi01MWRkNzE1NWNkOTEiLCJlbWFpbCI6ImExQGdtYWlsLmNvbSIsImlhdCI6MTc0NDIxODQxNSwiZXhwIjoxNzQ0MzA0ODE1fQ.LoqJWMlw1mnw4kITT9BhlaPQ4e7wRFGh0PD9QjF5AsY`,
+            Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkMmEzOTA3NC0wMWIzLTQ0MzctOTVjZi01MWRkNzE1NWNkOTEiLCJlbWFpbCI6ImExQGdtYWlsLmNvbSIsImlhdCI6MTc0NDMxNTE4OCwiZXhwIjoxNzQ0NDAxNTg4fQ.G7UiYIvGlRyth-2vrh-bq1MkWmr6qasVaWVdzEoXPMY`,
           },
           body: JSON.stringify(apiData),
         }
