@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { fetchWithAuth } from "@/utils/auth";
 
 export default function CtaSection() {
   const router = useRouter(); // Ensure useRouter is used at the top level of the component
@@ -61,7 +62,7 @@ export default function CtaSection() {
     console.log(payload);
 
     try {
-      const response = await fetch(url, {
+      const response = await fetchWithAuth(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -69,6 +70,9 @@ export default function CtaSection() {
         body: JSON.stringify(payload),
       });
 
+      if (!response) {
+        throw new Error("No response received from the server");
+      }
       const contentType = response.headers.get("Content-Type");
       if (!response.ok) {
         if (contentType && contentType.includes("application/json")) {

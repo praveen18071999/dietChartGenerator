@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+import { fetchWithAuth } from "@/utils/auth";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useCallback, useEffect } from "react";
 
@@ -193,7 +194,7 @@ export function useDietPlan(dietId: { dietId: string }) {
       };
 
       // Make API call
-      const response = await fetch("http://localhost:8080/generate-diet-plan", {
+      const response = await fetchWithAuth("http://localhost:8080/generate-diet-plan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -202,8 +203,8 @@ export function useDietPlan(dietId: { dietId: string }) {
         body: JSON.stringify(apiData),
       });
 
-      if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response.status}`);
+      if (!response?.ok) {
+        throw new Error(`Network response was not ok: ${response?.status ?? "unknown"}`);
       }
       //console.log("API response status:", response)
       const apiResponse = await response.json();
@@ -301,7 +302,7 @@ export function useDietPlan(dietId: { dietId: string }) {
   const createUserSpecification = async (id: string) => {
     const apiData = profileRef.current;
 
-    const response = await fetch(
+    const response = await fetchWithAuth(
       `http://localhost:3001/userspec/createUserSpecification/${id}`,
       {
         method: "POST",
@@ -314,17 +315,17 @@ export function useDietPlan(dietId: { dietId: string }) {
       }
     );
 
-    if (!response.ok) {
-      throw new Error(`Network response was not ok: ${response.status}`);
+    if (!(response?.ok ?? false)) {
+      throw new Error(`Network response was not ok: ${response?.status ?? "unknown"}`);
     }
 
-    const data = await response.json();
+    const data = await response?.json?.() ?? {};
     console.log("Diet plan saved successfully:", data);
     //createUserSpecification();
   };
   const createdDiet = async(id:string) => {
     try {
-      const response = await fetch(
+      const response = await fetchWithAuth(
         `http://localhost:3001/diet/getDietChartById/${id}`,
         {
           method: "GET",
@@ -335,10 +336,10 @@ export function useDietPlan(dietId: { dietId: string }) {
           }
         }
       );
-      if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response.status}`);
+      if (!(response?.ok ?? false)) {
+        throw new Error(`Network response was not ok: ${response?.status ?? "unknown"}`);
       }
-      const data = await response.json();
+      const data = await response?.json?.() ?? {};
       console.log("Loaded diet data:", data);
       
       // Properly map the user specifications to the profile format
@@ -395,7 +396,7 @@ export function useDietPlan(dietId: { dietId: string }) {
         diet: dietPlan,
         days: days,
       };
-      const response = await fetch(
+      const response = await fetchWithAuth(
         "http://localhost:3001/diet/createDietPlan",
         {
           method: "POST",
@@ -408,11 +409,11 @@ export function useDietPlan(dietId: { dietId: string }) {
         }
       );
 
-      if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response.status}`);
+      if (!(response?.ok ?? false)) {
+        throw new Error(`Network response was not ok: ${response?.status ?? "unknown"}`);
       }
 
-      const data = await response.json();
+      const data = await response?.json?.() ?? {};
       await createUserSpecification(data.data[0].id);
       router.push(`/createDiet/${data.data[0].id}`);
       //createdDiet(data.data[0].id);
@@ -431,7 +432,7 @@ export function useDietPlan(dietId: { dietId: string }) {
         profile: profileRef.current,
       };
       console.log("API Data:", apiData);
-      const response = await fetch(
+      const response = await fetchWithAuth(
         `http://localhost:3001/diet/updateDietChartById/${dietId.dietId}`,
         {
           method: "PATCH",
@@ -444,11 +445,11 @@ export function useDietPlan(dietId: { dietId: string }) {
         }
       );
 
-      if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response.status}`);
+      if (!(response?.ok ?? false)) {
+        throw new Error(`Network response was not ok: ${response?.status ?? "unknown"}`);
       }
 
-      const data = await response.json();
+      const data = await response?.json?.() ?? {};
       console.log("Diet plan updated successfully:", data);
 
       setOriginalDietPlan(JSON.parse(JSON.stringify(dietPlan)));
