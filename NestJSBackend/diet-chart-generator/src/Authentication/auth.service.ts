@@ -20,7 +20,7 @@ export class AuthService {
   constructor(
     private readonly supabaseService: SupabaseService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   async signup(userData: any): Promise<any> {
     try {
@@ -158,13 +158,23 @@ export class AuthService {
         email: user.email,
       };
 
-      const token = this.jwtService.sign(payload);
+      const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+      const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+      // Store refresh token in the database
+      const supabase = this.supabaseService.getClient();
+      await supabase.from('refresh_tokens').insert({
+        userId: user.id,
+        token: refreshToken,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      });
 
       return {
         statusCode: 200,
         message: 'Login successful',
         userId: user.id,
-        accessToken: token,
+        accessToken: accessToken,
+        refreshToken: refreshToken,
         user: {
           id: user.id,
           email: user.email,
@@ -182,5 +192,66 @@ export class AuthService {
       this.logger.error('Login error', error);
       throw new InternalServerErrorException('An unexpected error occurred');
     }
+  }
+
+  async refreshAccessToken(refreshToken: string): Promise<string> {
+    const supabase = this.supabaseService.getClient();
+
+    // Check if the refresh token exists and is valid
+    const { data: tokenData, error } = await supabase
+      .from('refresh_tokens')
+      .select('*')
+      .eq('token', refreshToken)
+      .single();
+
+    if (error || !tokenData || new Date(tokenData.expiresAt) < new Date()) {
+      throw new BadRequestException('Invalid or expired refresh token');
+    }
+
+    // if (this.isTokenInvalidated(refreshToken)) {
+    //   throw new BadRequestException('Refresh token has been invalidated');
+    // }
+
+    try {
+      const payload = this.jwtService.verify(refreshToken);
+      const newAccessToken = this.jwtService.sign(
+        { sub: payload.sub, email: payload.email },
+        { expiresIn: '15m' }
+      );
+      const newRefreshToken = this.jwtService.sign(
+        { sub: payload.sub, email: payload.email },
+        { expiresIn: '7d' }
+      );
+      await supabase
+        .from('refresh_tokens')
+        .update({ token: newRefreshToken, expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) })
+        .eq('id', tokenData.id);
+      return newAccessToken;
+    } catch (error) {
+      throw new BadRequestException('Invalid refresh token');
+    }
+  }
+
+  private readonly refreshTokens: Set<string> = new Set(); // Temporary in-memory storage for invalidated tokens
+
+  async logout(refreshToken: string): Promise<void> {
+    if (!refreshToken) {
+      throw new BadRequestException('Refresh token is required');
+    }
+
+    const supabase = this.supabaseService.getClient();
+    const { error } = await supabase
+      .from('refresh_tokens')
+      .delete()
+      .eq('token', refreshToken);
+
+    if (error) {
+      this.logger.error('Error deleting refresh token', error);
+      throw new InternalServerErrorException('Failed to log out');
+    }
+  }
+
+  isTokenInvalidated(refreshToken: string): boolean {
+    return this.refreshTokens.has(refreshToken);
   }
 }
