@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { fetchWithAuth } from "@/utils/auth";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useCallback, useEffect } from "react";
 
@@ -194,7 +193,7 @@ export function useDietPlan(dietId: { dietId: string }) {
       };
 
       // Make API call
-      const response = await fetchWithAuth("http://localhost:8080/generate-diet-plan", {
+      const response = await fetch("http://localhost:8080/generate-diet-plan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -319,14 +318,14 @@ const transformApiResponse = (apiResponse: any) => {
   const createUserSpecification = async (id: string) => {
     const apiData = profileRef.current;
 
-    const response = await fetchWithAuth(
+    const response = await fetch(
       `http://localhost:3001/userspec/createUserSpecification/${id}`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkMmEzOTA3NC0wMWIzLTQ0MzctOTVjZi01MWRkNzE1NWNkOTEiLCJlbWFpbCI6ImExQGdtYWlsLmNvbSIsImlhdCI6MTc0NDMxNTE4OCwiZXhwIjoxNzQ0NDAxNTg4fQ.G7UiYIvGlRyth-2vrh-bq1MkWmr6qasVaWVdzEoXPMY`,
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
         body: JSON.stringify(apiData),
       }
@@ -342,14 +341,14 @@ const transformApiResponse = (apiResponse: any) => {
   };
   const createdDiet = async(id:string) => {
     try {
-      const response = await fetchWithAuth(
+      const response = await fetch(
         `http://localhost:3001/diet/getDietChartById/${id}`,
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
-            Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkMmEzOTA3NC0wMWIzLTQ0MzctOTVjZi01MWRkNzE1NWNkOTEiLCJlbWFpbCI6ImExQGdtYWlsLmNvbSIsImlhdCI6MTc0NDMxNTE4OCwiZXhwIjoxNzQ0NDAxNTg4fQ.G7UiYIvGlRyth-2vrh-bq1MkWmr6qasVaWVdzEoXPMY`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           }
         }
       );
@@ -413,24 +412,25 @@ const transformApiResponse = (apiResponse: any) => {
         diet: dietPlan,
         days: days,
       };
-      const response = await fetchWithAuth(
+      const response = await fetch(
         "http://localhost:3001/diet/createDietPlan",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
-            Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkMmEzOTA3NC0wMWIzLTQ0MzctOTVjZi01MWRkNzE1NWNkOTEiLCJlbWFpbCI6ImExQGdtYWlsLmNvbSIsImlhdCI6MTc0NDMxNTE4OCwiZXhwIjoxNzQ0NDAxNTg4fQ.G7UiYIvGlRyth-2vrh-bq1MkWmr6qasVaWVdzEoXPMY`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
           body: JSON.stringify(apiData),
         }
       );
-
-      if (!(response?.ok ?? false)) {
+      //console.log(response.ok)
+      //console.log(await response.json());
+      if (!response.ok) {
         throw new Error(`Network response was not ok: ${response?.status ?? "unknown"}`);
       }
 
-      const data = await response?.json?.() ?? {};
+      const data = await response.json();
       await createUserSpecification(data.data[0].id);
       router.push(`/createDiet/${data.data[0].id}`);
       //createdDiet(data.data[0].id);
@@ -449,14 +449,14 @@ const transformApiResponse = (apiResponse: any) => {
         profile: profileRef.current,
       };
       console.log("API Data:", apiData);
-      const response = await fetchWithAuth(
+      const response = await fetch(
         `http://localhost:3001/diet/updateDietChartById/${dietId.dietId}`,
         {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
-            Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkMmEzOTA3NC0wMWIzLTQ0MzctOTVjZi01MWRkNzE1NWNkOTEiLCJlbWFpbCI6ImExQGdtYWlsLmNvbSIsImlhdCI6MTc0NDIxODQxNSwiZXhwIjoxNzQ0MzA0ODE1fQ.LoqJWMlw1mnw4kITT9BhlaPQ4e7wRFGh0PD9QjF5AsY`,
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
           body: JSON.stringify(apiData),
         }
@@ -494,7 +494,7 @@ const transformApiResponse = (apiResponse: any) => {
       // Update hasDietChanged based on any change
       setHasDietChanged(planChanged || durationChanged || profileChanged);
     }
-  }, [dietPlan, originalDietPlan, dietDuration, originalDietDuration, originalProfile, profileRef, profileVersion]);
+  }, [dietPlan, originalDietPlan, dietDuration, originalDietDuration]);
   
 
   // Add useEffect to store the original plan when it's first loaded

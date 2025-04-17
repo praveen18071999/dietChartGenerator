@@ -28,8 +28,8 @@ const diseases = [
 
 export default function DietPlanner(dietId: any) {
   const router = useRouter()
-  console.log("Diet ID:", dietId)
-  console.log(dietId.length)
+  //console.log("Diet ID:", dietId)
+  //console.log(dietId.length)
 
   const {
     profileRef,
@@ -68,10 +68,10 @@ export default function DietPlanner(dietId: any) {
     handleChatSubmit,
     shareDietPlan,
   } = useChat()
-
+  console.log("Diet ID:", dietId.dietId)
   const proceedToCheckout = () => {
     setShowCartDialog(false)
-    router.push("/checkout")
+    router.push("/checkout?dietid=" + dietId.dietId)
   }
 
   const handleAddToCart = (item: any) => {

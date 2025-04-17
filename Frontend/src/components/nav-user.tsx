@@ -30,7 +30,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useRouter } from "next/navigation";
-import { fetchWithAuth } from "@/utils/auth";
 
 export function NavUser({
   user,
@@ -45,25 +44,8 @@ export function NavUser({
   const { isMobile } = useSidebar();
 
   const handleLogout = async () => {
-    const refreshToken = localStorage.getItem("refreshToken");
-    if (!refreshToken) return;
-
-    try {
-      await fetchWithAuth("/auth/logout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
-      });
-
-      // Clear tokens from localStorage
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-
-      // Redirect to login page
-      router.push("/login");
-    } catch (error) {
-      console.error("Error logging out:", error);
-    }
+   sessionStorage.removeItem("token");
+   router.push("/");
   };
 
   return (

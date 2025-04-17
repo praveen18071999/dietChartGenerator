@@ -158,7 +158,7 @@ export class AuthService {
         email: user.email,
       };
 
-      const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+      const accessToken = this.jwtService.sign(payload);
       const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
       // Store refresh token in the database

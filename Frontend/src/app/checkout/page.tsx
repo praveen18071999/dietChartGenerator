@@ -1,13 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, ShoppingBag } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { CalendarIcon } from "lucide-react"
+import { format } from "date-fns"
 
 type CartItem = {
   id: string
@@ -21,11 +25,33 @@ type CartItem = {
   deliveryTime?: string
 }
 
-export default function CheckoutPage() {
+// Component that uses search params
+function CheckoutContent() {
+  const searchParams = useSearchParams()
   const router = useRouter()
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [loading, setLoading] = useState(true)
-
+  
+  const [placeOrderLoading, setPlaceOrderLoading] = useState(false)
+  const [startDate, setStartDate] = useState<Date | undefined>(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow;
+  });
+  const [formState, setFormState] = useState({
+    firstName: '',
+    lastName: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    phoneNumber: '',
+    email: ''
+  });
+  
+  const dietId = searchParams.get("dietid")
+  console.log("Diet ID:", dietId)
+  
   // Default delivery times for each meal type
   const defaultDeliveryTimes = {
     breakfast: "08:00",
@@ -33,6 +59,31 @@ export default function CheckoutPage() {
     dinner: "19:00",
     snacks: "16:00",
   }
+  
+  const isFormValid = () => {
+    const { firstName, lastName, address, city, state, zipCode, phoneNumber, email } = formState;
+
+    // Check if all required fields are filled
+    return (
+      firstName.trim() !== '' &&
+      lastName.trim() !== '' &&
+      address.trim() !== '' &&
+      city.trim() !== '' &&
+      state.trim() !== '' &&
+      zipCode.trim() !== '' &&
+      phoneNumber.trim() !== '' &&
+      email.trim() !== '' &&
+      startDate !== undefined
+    );
+  };
+
+  // Handle input changes
+  const handleInputChange = (field: keyof typeof formState, value: string) => {
+    setFormState(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   useEffect(() => {
     // Retrieve cart items from localStorage
@@ -56,17 +107,82 @@ export default function CheckoutPage() {
     return cartItems.reduce((total, item) => total + item.calories * 0.05, 0).toFixed(2)
   }
 
-  const handlePlaceOrder = () => {
-    alert("Order placed successfully!")
-    localStorage.removeItem("dietPlannerCart")
-    router.push("/")
+  const subtotal = Number.parseFloat(getSubtotal());
+  const tax = subtotal * 0.08;
+  const deliveryFee = 5.99;
+  const total = subtotal + tax + deliveryFee;
+  
+  // Prepare the order summary data
+  const orderSummary = {
+    subtotal: subtotal.toFixed(2),
+    tax: tax.toFixed(2),
+    deliveryfee: deliveryFee.toFixed(2),
+    totalAmount: total.toFixed(2),
+    dietid: dietId,
+  };
+  
+  const customerDetails = {
+    firstname: formState.firstName,
+    lastname: formState.lastName,
+    address: formState.address,
+    city: formState.city,
+    state: formState.state,
+    zipcode: formState.zipCode,
+    phonenumber: formState.phoneNumber,
+    email: formState.email,
+    startdate: startDate,
   }
+  
+  const cartData = {
+    diet: cartItems,
+    startdate: startDate,
+  }
+  
+  const handlePlaceOrder = async () => {
+    setPlaceOrderLoading(true)
+    try {
+      const response = await fetch("http://localhost:3001/cart/order", {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          items: cartData,
+          customerDetails: customerDetails,
+          orderSummary: orderSummary
+        }),
+      })
 
+      if (!response.ok) {
+        throw new Error(`Error placing order: ${response.status}`)
+      }
+
+      const data = await response.json();
+      setPlaceOrderLoading(false)
+      router.push(`/order-confirmation/${data.data.cartId}`)
+    } catch (error) {
+      console.error("Error placing order:", error)
+      setPlaceOrderLoading(false)
+      alert("There was an error placing your order. Please try again.")
+    }
+  }
+  
+  if(placeOrderLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <Progress value={80} className="w-60 h-2 mb-4" />
+        <p className="text-gray-500">Placing your order...</p>
+      </div>
+    )
+  }
+  
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Progress value={80} className="w-60 h-2" />
-        <p className="mt-4 text-gray-500">Loading your cart...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <Progress value={80} className="w-60 h-2 mb-4" />
+        <p className="text-gray-500">Loading your cart...</p>
       </div>
     )
   }
@@ -186,43 +302,101 @@ export default function CheckoutPage() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">First Name</label>
-                    <Input className="h-10" />
+                    <label className="block text-sm font-medium mb-1">Start Date</label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full h-10 justify-start text-left font-normal border"
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {startDate ? format(startDate, "PPP") : <span>Select a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={startDate}
+                          onSelect={setStartDate}
+                          initialFocus
+                          disabled={(date) => date < new Date()} // Can't select dates in the past
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <p className="text-xs text-gray-500 mt-1">Select when you want your first delivery</p>
                   </div>
                   <div>
+                    <label className="block text-sm font-medium mb-1">First Name</label>
+                    <Input className="h-10"
+                      value={formState.firstName}
+                      onChange={(e) => handleInputChange('firstName', e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
                     <label className="block text-sm font-medium mb-1">Last Name</label>
-                    <Input className="h-10" />
+                    <Input className="h-10"
+                      value={formState.lastName}
+                      onChange={(e) => handleInputChange('lastName', e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Email</label>
+                    <Input className="h-10" type="email"
+                      value={formState.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      required
+                    />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-1">Address</label>
-                  <Input className="h-10" />
+                  <Input className="h-10"
+                    value={formState.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    required
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">City</label>
-                    <Input className="h-10" />
+                    <Input className="h-10"
+                      value={formState.city}
+                      onChange={(e) => handleInputChange('city', e.target.value)}
+                      required
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">State</label>
-                    <Input className="h-10" />
+                    <Input className="h-10"
+                      value={formState.state}
+                      onChange={(e) => handleInputChange('state', e.target.value)}
+                      required
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">ZIP Code</label>
-                    <Input className="h-10" />
+                    <Input className="h-10"
+                      value={formState.zipCode}
+                      onChange={(e) => handleInputChange('zipCode', e.target.value)}
+                      required
+                    />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-1">Phone Number</label>
-                  <Input className="h-10" />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Email</label>
-                  <Input className="h-10" type="email" />
+                  <Input className="h-10"
+                    value={formState.phoneNumber}
+                    onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                    required
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -258,8 +432,9 @@ export default function CheckoutPage() {
                 <Button
                   onClick={handlePlaceOrder}
                   className="w-full h-14 text-lg bg-purple-600 hover:bg-purple-500 text-white"
+                  disabled={!isFormValid()}
                 >
-                  Place Order
+                  {isFormValid() ? "Place Order" : "Please Fill All Fields"}
                 </Button>
               </CardFooter>
             </Card>
@@ -270,3 +445,16 @@ export default function CheckoutPage() {
   )
 }
 
+// Main component with Suspense boundary
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <Progress value={80} className="w-60 h-2 mb-4" />
+        <p className="text-gray-500">Loading checkout...</p>
+      </div>
+    }>
+      <CheckoutContent />
+    </Suspense>
+  )
+}

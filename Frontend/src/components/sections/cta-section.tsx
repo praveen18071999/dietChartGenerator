@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client' // Ensure this is at the top of the file to enable client-side rendering
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { fetchWithAuth } from "@/utils/auth";
+import { showToast } from "@/lib/toast";
 
 export default function CtaSection() {
   const router = useRouter(); // Ensure useRouter is used at the top level of the component
@@ -45,52 +46,98 @@ export default function CtaSection() {
     e.preventDefault();
     setErrorMessage("");
     setSuccessMessage("");
-
+  
     // Validate age
     if (!isLoginMode && parseInt(formData.age, 10) <= 13) {
       setErrorMessage("Age must be greater than 13.");
+      showToast.error("Age must be greater than 13.");
       return;
     }
-
-    const baseUrl = process.env.REACT_APP_API_BASE_URL || "http://localhost:3002";
+  
+    const baseUrl = process.env.REACT_APP_API_BASE_URL || "http://localhost:3001";
     const url = isLoginMode ? `${baseUrl}/auth/login` : `${baseUrl}/auth/signup`;
     const payload = isLoginMode
       ? { email: formData.email, password: formData.password }
       : { ...formData, age: parseInt(formData.age, 10) };
-
-    console.log("Payload for API request:");
-    console.log(payload);
-
+  
     try {
-      const response = await fetchWithAuth(url, {
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
       });
-
+  
       if (!response) {
-        throw new Error("No response received from the server");
+        showToast.error("No response received from the server");
+        setErrorMessage("No response received from the server");
+        return;
       }
+      
       const contentType = response.headers.get("Content-Type");
+      
       if (!response.ok) {
         if (contentType && contentType.includes("application/json")) {
           const errorData = await response.json();
-          throw new Error(errorData.message || "Something went wrong");
+          const errorMsg = errorData.message || "Something went wrong";
+          
+          if (isLoginMode && response.status === 401) {
+            showToast.error("Invalid email or password");
+            setErrorMessage("Invalid email or password");
+          } else {
+            showToast.error(errorMsg);
+            setErrorMessage(errorMsg);
+          }
         } else {
-          throw new Error("Unexpected response from the server");
+          showToast.error("Unexpected response from the server");
+          setErrorMessage("Unexpected response from the server");
         }
+        return; // Stop execution after showing error
       }
-
+  
       const data = await response.json();
-      setSuccessMessage(isLoginMode ? "Login successful!" : "Signup successful!");
-      console.log(data); // Handle the response data as needed
-
-      // Redirect to createDiet page on successful login or signup
-      router.push("/createDiet");
+      
+      if (isLoginMode) {
+        console.log("Login response data:", data);
+        // User is logging in - store token and redirect
+        if (data && data.accessToken) {
+          sessionStorage.setItem("token", data.accessToken);
+          console.log("Token stored in session storage");
+          
+          showToast.success('Login Successful!');
+          setSuccessMessage('Login Successful!');
+          
+          // Redirect to createDiet page after login
+          setTimeout(() => {
+            setIsPopupOpen(false);
+            router.push("/createDiet");
+          }, 1500);
+        } else {
+          showToast.error("Login failed. No access token received.");
+          setErrorMessage("Login failed. Please try again.");
+        }
+      } else {
+        // User just signed up - show login form
+        showToast.success('Signup Successful! Please login with your credentials.');
+        setSuccessMessage('Signup Successful! Please login with your credentials.');
+        
+        // Clear password field for security
+        setFormData(prev => ({
+          ...prev,
+          password: ""
+        }));
+        
+        // Switch to login mode after signup
+        setTimeout(() => {
+          setIsLoginMode(true);
+        }, 1000);
+      }
+      
     } catch (error: any) {
-      setErrorMessage(error.message);
+      const errorMsg = error.message || "An unexpected error occurred";
+      showToast.error(errorMsg);
+      setErrorMessage(errorMsg);
     }
   };
 
@@ -228,7 +275,7 @@ export default function CtaSection() {
             <div className="mt-4 text-sm text-center">
               {isLoginMode ? (
                 <>
-                  Don't have an account?{" "}
+                  Don&apos;t have an account?{" "}
                   <button
                     onClick={toggleMode}
                     className="text-primary hover:underline"
