@@ -13,6 +13,12 @@ export class OrderController {
   async getOrderConfirmation(@Req() req: any, @Param('id') id: string) {
     return this.orderService.getOrderConfirmation(id);
   }
+
+  @Get('order-history')
+  async getOrderHistory(@Req() req: any) {
+    //console.log('User ID:', req.user);
+    return await this.orderService.getOrderHistory(req.user.userid);
+  }
   // Define your controller methods here
   // For example, you might have a method to create an order
 }

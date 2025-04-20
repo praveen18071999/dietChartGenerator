@@ -62,4 +62,23 @@ export class OrderService {
       };
     }
   }
+
+  async getOrderHistory(userId: string): Promise<any> {
+    try {
+      const { data, error } = await this.databaservice
+        .getClient()
+        .rpc('diethistorytabledata', {
+          userid: userId,
+        });
+        console.log('Data:', data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching order history:', error);
+      return {
+        success: false,
+        message: 'Failed to fetch order history',
+        error: error.message || 'Unknown error occurred',
+      };
+    }
+  }
 }
