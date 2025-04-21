@@ -1,13 +1,24 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { CheckCircle, Clock, MapPin, ArrowLeft, Truck } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
+import { useParams, useRouter } from "next/navigation"
+import { CheckCircle, Clock, MapPin, ArrowLeft, Truck, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { DeliveryCountdown } from "@/components/delivery-countdown"
-import { format, set } from "date-fns"
+import { format } from "date-fns"
+import { OrderStatus } from "./components/order-status"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 type OrderItem = {
   id: string
@@ -19,39 +30,57 @@ type OrderItem = {
   deliveryTime?: string
 }
 
+type DeliveryInfo = {
+  mealType: string;
+  time: string;
+  timeInMinutes: number;
+  isToday: boolean;
+};
+
+type OrderDetails = {
+  orderId: string
+  items: OrderItem[]
+  customer: {
+    name: string
+    address: string
+    city: string
+    state: string
+    zip: string
+    email: string
+    phone: string
+  }
+  payment: {
+    subtotal: number
+    tax: number
+    deliveryFee: number
+    total: number
+  }
+  deliveryTimes: Record<string, string>
+}
+
 export default function OrderConfirmationPage() {
   const router = useRouter()
-  //const searchParams = useSearchParams()
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false)
   const params = useParams();
   const [loading, setLoading] = useState(true)
   const [startDate, setStartDate] = useState<Date>(new Date());
+  const [endDate, setEndDate] = useState<Date>(new Date());
   const [breakfastTime, setBreakfastTime] = useState<string>("");
   const [lunchTime, setLunchTime] = useState<string>("");
   const [dinnerTime, setDinnerTime] = useState<string>("");
   const [snackTime, setSnackTime] = useState<string>("");
-  const [orderDetails, setOrderDetails] = useState<{
-    orderId: string
-    items: OrderItem[]
-    customer: {
-      name: string
-      address: string
-      city: string
-      state: string
-      zip: string
-      email: string
-      phone: string
-    }
-    payment: {
-      subtotal: number
-      tax: number
-      deliveryFee: number
-      total: number
-    }
-    deliveryTimes: Record<string, string>
-  } | null>(null)
+  const [orderStatus, setOrderStatus] = useState<"active" | "delivered" | "cancelled">("active")
+  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null)
+  // Add state for nextDelivery to avoid React hooks error
+  const [nextDelivery, setNextDelivery] = useState<DeliveryInfo | null>(null)
+  const [allDeliveriesCompleted, setAllDeliveriesCompleted] = useState(false)
+  const [isPastDeliveryDate, setIsPastDeliveryDate] = useState(false)
 
   const orderId = params.id
-  console.log("Order ID from params:", orderId);
+  // First useEffect - fetch order data
+  const showCancelDialog = () => {
+    setIsCancelDialogOpen(true)
+  }
   useEffect(() => {
     setLoading(true);
     fetch(`http://localhost:3001/orders/order-confirmation/${orderId}`, {
@@ -68,7 +97,7 @@ export default function OrderConfirmationPage() {
         return response.json();
       })
       .then((data) => {
-        console.log("Raw date from API:", data.data.cartData.startdate);
+        console.log("Fetched order data:", data);
 
         // Parse the date without timezone conversion
         const rawDate = data.data.cartData.startdate;
@@ -79,7 +108,7 @@ export default function OrderConfirmationPage() {
 
         // Create date with the exact date parts (no time) to avoid timezone issues
         const deliveryDate = new Date(year, month, day);
-        console.log("Parsed delivery date:", deliveryDate);
+        //console.log("Parsed delivery date:", deliveryDate);
 
         setStartDate(deliveryDate);
 
@@ -107,7 +136,7 @@ export default function OrderConfirmationPage() {
           item.price = item.calories * 0.05;
         }
 
-        const orderDetails = {
+        const orderDetailsData = {
           orderId: 'ORD' + orderId,
           items: data.data.cartData.diet,
           customer: {
@@ -128,8 +157,16 @@ export default function OrderConfirmationPage() {
           deliveryTimes: deliveryTimes, // Only use actual times from the data
         };
 
-        console.log("Order details fetched successfully:", orderDetails);
-        setOrderDetails(orderDetails);
+        console.log("Order details fetched successfully:", orderDetailsData);
+        setOrderDetails(orderDetailsData);
+        setEndDate(new Date(data.data.cartData.endDate));
+        console.log("Order status:", data.data.cartData.status);
+        if (data.data.cartData.status == "Cancelled" || data.data.cartData.status == "Delivered") {
+          setOrderStatus(data.data.cartData.status.toLowerCase() as "active" | "delivered" | "cancelled");
+        } else {
+          setOrderStatus("active");
+        }
+        //setOrderStatus(data.data.cartData && data.data.cartData.status && data.data.cartData.status.toLowerCase() as "active" | "delivered" | "cancelled");
         setLoading(false);
       })
       .catch((error) => {
@@ -137,117 +174,179 @@ export default function OrderConfirmationPage() {
         setLoading(false);
       });
   }, [orderId]);
-  // useEffect(() => {
 
-  //   let storedCart = localStorage.getItem("dietPlannerCart");
-  //   let storedCustomer = localStorage.getItem("dietPlannerCustomer");
-  //   let orderFound = false;
-  //   if (storedCart && storedCustomer) {
-  //     try {
-  //       const cartItems = JSON.parse(storedCart);
-  //       const customer = JSON.parse(storedCustomer);
+  // Second useEffect - calculate delivery status
+  // Second useEffect - calculate delivery status
+  useEffect(() => {
+    if (!orderDetails || loading) return;
 
-  //       // Group items by meal type to get delivery times
-  //       const mealGroups: Record<string, string> = {};
-  //       cartItems.forEach((item: any) => {
-  //         if (item.mealType && item.deliveryTime) {
-  //           mealGroups[item.mealType] = item.deliveryTime;
-  //         }
-  //       });
+    const now = new Date();
+    const startDeliveryDate = new Date(startDate);
+    const endDeliveryDate = new Date(endDate);
 
-  //       // Calculate payment details
-  //       const subtotal = cartItems.reduce((total: number, item: any) => total + item.calories * 0.05, 0);
-  //       const tax = subtotal * 0.08;
-  //       const deliveryFee = 5.99;
-  //       const total = subtotal + tax + deliveryFee;
+    // Check if all delivery dates are in the past (i.e., current date is past end date)
+    const isAllDeliveryDatesPast = now > endDeliveryDate;
 
-  //       setOrderDetails({
-  //         orderId: "ORD-" + Math.floor(10000 + Math.random() * 90000),
-  //         items: cartItems.map((item: any) => ({
-  //           ...item,
-  //           price: item.calories * 0.05,
-  //         })),
-  //         customer,
-  //         payment: {
-  //           subtotal,
-  //           tax,
-  //           deliveryFee,
-  //           total,
-  //         },
-  //         deliveryTimes: mealGroups,
-  //       });
+    // Find the next occurrence of delivery date
+    let currentDeliveryDate = new Date(startDeliveryDate);
 
-  //       orderFound = true;
-  //     } catch (error) {
-  //       console.error("Error parsing stored data:", error);
-  //     }
-  //   }
+    // If today is after start date but before end date, find the current delivery date
+    if (now > startDeliveryDate && now <= endDeliveryDate) {
+      // Set to today's date, but keep the original date's time
+      currentDeliveryDate = new Date(now);
+      currentDeliveryDate.setHours(0, 0, 0, 0);
+    }
 
-  //   // If no order was found, use dummy data
-  //   if (!orderFound) {
-  //     // Set dummy data
-  //     const dummyOrderDetails = {
-  //       orderId: "ORD-" + Math.floor(10000 + Math.random() * 90000),
-  //       items: [
-  //         {
-  //           id: "item1",
-  //           name: "Grilled Chicken Salad",
-  //           quantity: "1 serving",
-  //           calories: 350,
-  //           price: 17.50,
-  //           mealType: "lunch",
-  //           deliveryTime: "12:30"
-  //         },
-  //         {
-  //           id: "item2",
-  //           name: "Protein Smoothie",
-  //           quantity: "16 oz",
-  //           calories: 280,
-  //           price: 14.00,
-  //           mealType: "breakfast",
-  //           deliveryTime: "08:00"
-  //         },
-  //         {
-  //           id: "item3",
-  //           name: "Salmon with Vegetables",
-  //           quantity: "1 serving",
-  //           calories: 450,
-  //           price: 22.50,
-  //           mealType: "dinner",
-  //           deliveryTime: "19:00"
-  //         }
-  //       ],
-  //       customer: {
-  //         name: "John Doe",
-  //         address: "123 Main Street",
-  //         city: "San Francisco",
-  //         state: "CA",
-  //         zip: "94105",
-  //         email: "john.doe@example.com",
-  //         phone: "555-123-4567"
-  //       },
-  //       payment: {
-  //         subtotal: 54.00,
-  //         tax: 4.32,
-  //         deliveryFee: 5.99,
-  //         total: 64.31
-  //       },
-  //       deliveryTimes: {
-  //         breakfast: "08:00",
-  //         lunch: "12:30",
-  //         dinner: "19:00"
-  //       }
-  //     };
+    // Check if current delivery date is valid (not past end date)
+    const isValidDeliveryDate = currentDeliveryDate <= endDeliveryDate;
 
-  //     setOrderDetails(dummyOrderDetails);
-  //   }
+    // Compare today with the current delivery date
+    const isSameDay =
+      now.getDate() === currentDeliveryDate.getDate() &&
+      now.getMonth() === currentDeliveryDate.getMonth() &&
+      now.getFullYear() === currentDeliveryDate.getFullYear();
 
-  //   setLoading(false);
+    // Calculate current time in minutes
+    const currentHour = now.getHours();
+    const currentMinutes = now.getMinutes();
+    const currentTimeInMinutes = currentHour * 60 + currentMinutes;
 
-  //   // Clear cart after order is placed
-  //   localStorage.removeItem("dietPlannerCart");
-  // }, []);
+    // Find the next meal to be delivered
+    let nextDeliveryInfo: DeliveryInfo | null = null;
 
+    // Track if all deliveries are in the past
+    let allCompleted = isAllDeliveryDatesPast;
+
+    if (!isAllDeliveryDatesPast && isValidDeliveryDate) {
+      Object.entries(orderDetails.deliveryTimes || {}).forEach(([mealType, time]) => {
+        if (!time || !time.includes(':')) return; // Skip invalid time formats
+
+        const [hours, minutes] = time.split(":").map(Number);
+        if (isNaN(hours) || isNaN(minutes)) return; // Skip if parsing failed
+
+        const timeInMinutes = hours * 60 + minutes;
+
+        // A delivery is upcoming if either:
+        // 1. It's today and the time is in the future, or
+        // 2. It's a future date within the delivery period
+        const isUpcoming = (isSameDay && timeInMinutes > currentTimeInMinutes) ||
+          (!isSameDay && currentDeliveryDate <= endDeliveryDate);
+
+        if (isUpcoming) {
+          allCompleted = false; // At least one upcoming delivery
+
+          // Find the next upcoming delivery
+          const isToday = isSameDay && timeInMinutes > currentTimeInMinutes;
+
+          // Only update nextDeliveryInfo if this meal happens sooner than the current next delivery
+          if (!nextDeliveryInfo || (isToday && timeInMinutes < nextDeliveryInfo.timeInMinutes)) {
+            nextDeliveryInfo = {
+              mealType,
+              time,
+              timeInMinutes,
+              isToday: isToday
+            };
+          }
+        }
+      });
+    }
+
+    // If we don't have an upcoming delivery today but we're still within the delivery period,
+    // find the next day's first delivery
+    if (!nextDeliveryInfo && !isAllDeliveryDatesPast && currentDeliveryDate < endDeliveryDate) {
+      // Get the earliest delivery for the next day
+      let earliestTime = Number.MAX_SAFE_INTEGER;
+      let earliestMealType = '';
+      let earliestTimeString = '';
+
+      Object.entries(orderDetails.deliveryTimes || {}).forEach(([mealType, time]) => {
+        if (!time || !time.includes(':')) return;
+
+        const [hours, minutes] = time.split(":").map(Number);
+        if (isNaN(hours) || isNaN(minutes)) return;
+
+        const timeInMinutes = hours * 60 + minutes;
+
+        if (timeInMinutes < earliestTime) {
+          earliestTime = timeInMinutes;
+          earliestMealType = mealType;
+          earliestTimeString = time;
+        }
+      });
+
+      if (earliestMealType) {
+        // Set for the next day
+        const nextDay = new Date(currentDeliveryDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+
+        nextDeliveryInfo = {
+          mealType: earliestMealType,
+          time: earliestTimeString,
+          timeInMinutes: earliestTime,
+          isToday: false
+        };
+
+        allCompleted = false;
+      }
+    }
+
+    setNextDelivery(nextDeliveryInfo);
+    setAllDeliveriesCompleted(allCompleted);
+    setIsPastDeliveryDate(isAllDeliveryDatesPast);
+
+  }, [orderDetails, loading, startDate, endDate]);
+
+  // Third useEffect - update order status based on delivery status
+  useEffect(() => {
+    if ((isPastDeliveryDate || allDeliveriesCompleted) && orderStatus === "active") {
+      setOrderStatus("delivered");
+    }
+  }, [isPastDeliveryDate, allDeliveriesCompleted, orderStatus]);
+
+  // Handle order cancellation
+  const handleCancelOrder = async () => {
+    try {
+      // Implement the API call to cancel the order
+      const apiData = {
+        status: "Cancelled",
+      }
+      const response = await fetch(`http://localhost:3001/orders/update-order-status/${orderId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(apiData),
+      });
+
+      if (response.ok) {
+        setOrderStatus("cancelled");
+      } else {
+        alert("Failed to cancel order. Please try again or contact support.");
+      }
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      alert("An error occurred while cancelling your order.");
+    }
+  };
+    // Calculate the actual next delivery date
+    const nextDeliveryDate = useMemo(() => {
+      if (!nextDelivery) return new Date();
+      
+      const now = new Date();
+      let deliveryDate;
+      
+      if (nextDelivery.isToday) {
+        // For today's delivery, use today's date
+        deliveryDate = new Date(now);
+      } else {
+        // For tomorrow's delivery, use tomorrow's date
+        deliveryDate = new Date(now);
+        deliveryDate.setDate(deliveryDate.getDate() + 1);
+      }
+      
+      return deliveryDate;
+    }, [nextDelivery]);
   if (loading) {
     return (
       <div className="min-h-screen flex justify-end items-center p-8">
@@ -272,84 +371,89 @@ export default function OrderConfirmationPage() {
       </div>
     )
   }
-
-  // Find the next meal to be delivered
-  // Find the next meal to be delivered
-  const now = new Date(); // Current time
-  const deliveryDate = new Date(startDate); // The selected delivery date
-
-  // Only compare times if the delivery is today
-  const isSameDay =
-    now.getDate() === deliveryDate.getDate() &&
-    now.getMonth() === deliveryDate.getMonth() &&
-    now.getFullYear() === deliveryDate.getFullYear();
-
-  const currentHour = isSameDay ? now.getHours() : 0;
-  const currentMinutes = isSameDay ? now.getMinutes() : 0;
-  const currentTimeInMinutes = currentHour * 60 + currentMinutes;
-
-  // If the delivery is in the future, all meals are "next"
-  const isDeliveryInFuture = deliveryDate > now;
-
-  // Find the next meal to be delivered
-  let nextDelivery: { mealType: string; time: string; timeInMinutes: number } | null = null as {
-    mealType: string;
-    time: string;
-    timeInMinutes: number;
-  } | null;
-
-  Object.entries(orderDetails.deliveryTimes || {}).forEach(([mealType, time]) => {
-    if (!time || !time.includes(':')) return; // Skip invalid time formats
-
-    const [hours, minutes] = time.split(":").map(Number)
-    if (isNaN(hours) || isNaN(minutes)) return; // Skip if parsing failed
-
-    const timeInMinutes = hours * 60 + minutes
-
-    // If the delivery is later today
-    if (timeInMinutes > currentTimeInMinutes) {
-      if (!nextDelivery || timeInMinutes < nextDelivery.timeInMinutes) {
-        nextDelivery = { mealType, time, timeInMinutes }
-      }
-    }
-  });
-
-  // If no delivery is found for today, find the earliest one for tomorrow
-  if (!nextDelivery) {
-    Object.entries(orderDetails.deliveryTimes).forEach(([mealType, time]) => {
-      const [hours, minutes] = time.split(":").map(Number)
-      const timeInMinutes = hours * 60 + minutes
-
-      if (!nextDelivery || timeInMinutes < nextDelivery.timeInMinutes) {
-        nextDelivery = { mealType, time, timeInMinutes }
-      }
-    })
-  }
-
+  
   return (
     <div className="min-h-screen bg-white-50 p-4 md:p-8 w-full">
+      <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Your Order</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this order? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No, Keep My Order</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancelOrder}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Yes, Cancel Order
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <div className="max-w-7xl mx-auto">
         <Button variant="ghost" onClick={() => router.push("/createDiet")} className="mb-6 flex items-center gap-2 text-lg">
           <ArrowLeft className="h-5 w-5" />
           Return to Diet Plan
         </Button>
 
-        <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6 mb-8 flex items-center gap-4">
-          <div className="bg-green-100 p-3 rounded-full">
-            <CheckCircle className="h-8 w-8 text-green-600" />
+        <div className={`border-2 rounded-xl p-6 mb-8 flex items-center gap-4 ${orderStatus === "cancelled"
+            ? "bg-red-50 border-red-200"
+            : "bg-green-50 border-green-200"
+          }`}>
+          <div className={`p-3 rounded-full ${orderStatus === "cancelled" ? "bg-red-100" : "bg-green-100"
+            }`}>
+            {orderStatus === "cancelled" ? (
+              <AlertCircle className="h-8 w-8 text-red-600" />
+            ) : (
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            )}
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-green-800">Order Confirmed!</h1>
-            <p className="text-green-700">
-              Your order #{orderDetails.orderId} has been placed successfully. You&apos;ll receive an email confirmation
-              shortly.
+            <h1 className={`text-2xl font-bold ${orderStatus === "cancelled" ? "text-red-800" : "text-green-800"
+              }`}>
+              {orderStatus === "cancelled"
+                ? "Order Cancelled"
+                : orderStatus === "delivered"
+                  ? "Order Delivered Successfully"
+                  : "Order Confirmed!"}
+            </h1>
+            <p className={orderStatus === "cancelled" ? "text-red-700" : "text-green-700"}>
+              {orderStatus === "cancelled"
+                ? `Your order #${orderDetails.orderId} has been cancelled.`
+                : `Your order #${orderDetails.orderId} has been ${orderStatus === "delivered" ? "delivered successfully" : "placed successfully"
+                }. ${orderStatus === "active" ? "You'll receive an email confirmation shortly." : ""}`}
             </p>
           </div>
         </div>
 
+        {/* Show cancel button only for active orders */}
+        {orderStatus === "active" && (
+          <div className="mb-6">
+            <Button
+              variant="destructive"
+              onClick={showCancelDialog}
+              className="hover:bg-red-700"
+            >
+              Cancel Order
+            </Button>
+          </div>
+        )}
+
+        <div className="mb-8">
+          <OrderStatus
+            nextDelivery={nextDelivery}
+            isToday={nextDelivery?.isToday || false}
+            orderStatus={orderStatus}
+            orderId={orderId}
+          />
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            {nextDelivery && (
+            {/* Only show next delivery card for active orders with upcoming deliveries */}
+            {nextDelivery && orderStatus === "active" && (
               <Card className="border-2 shadow-md bg-gradient-to-r from-purple-50 to-blue-50">
                 <CardHeader>
                   <CardTitle className="text-2xl flex items-center gap-2">
@@ -364,7 +468,7 @@ export default function OrderConfirmationPage() {
                   <DeliveryCountdown
                     deliveryTime={nextDelivery.time}
                     mealType={nextDelivery.mealType}
-                    deliveryDate={startDate} // Pass the delivery date
+                    deliveryDate={nextDeliveryDate} // Pass the delivery date
                   />
                 </CardContent>
               </Card>
@@ -376,7 +480,14 @@ export default function OrderConfirmationPage() {
                   <Truck className="h-6 w-6 text-purple-600" />
                   Delivery Schedule
                 </CardTitle>
-                <CardDescription className="text-base">Your meals will be delivered at these times</CardDescription>
+                <CardDescription className="text-base">
+                  {orderStatus === "cancelled"
+                    ? "Your meals were scheduled for these times"
+                    : orderStatus === "delivered"
+                      ? "Your meals were delivered at these times"
+                      : "Your meals will be delivered at these times daily from " +
+                      format(startDate, 'MMM d') + " to " + format(endDate, 'MMM d')}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {Object.entries(orderDetails.deliveryTimes).map(([mealType, time]) => (
@@ -462,11 +573,13 @@ export default function OrderConfirmationPage() {
                   </div>
                 </div>
               </CardContent>
-              {/* <CardFooter>
-                <Button onClick={() => router.push("/")} className="w-full h-12 text-lg">
-                  Order Again
-                </Button>
-              </CardFooter> */}
+              {orderStatus === "delivered" && (
+                <CardFooter>
+                  <Button className="w-full h-12 text-lg">
+                    Order Again
+                  </Button>
+                </CardFooter>
+              )}
             </Card>
           </div>
         </div>

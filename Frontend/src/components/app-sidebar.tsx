@@ -36,20 +36,10 @@ const data = {
   },
   teams: [
     {
-      name: "Acme Inc",
+      name: "Consistency",
       logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
+      plan: "Get Your Diet",
+    }
   ],
   navMain: [
     {
@@ -83,7 +73,7 @@ const data = {
         },
         {
           title: "Diet Plan",
-          url: "#",
+          url: "/createDiet",
         },
         
       ],
@@ -103,7 +93,7 @@ const data = {
         },
         {
           title: "Diet Order History",
-          url: "#",
+          url: "/order-history",
         },
         {
           title: "Payment History",

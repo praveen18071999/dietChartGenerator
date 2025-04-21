@@ -31,7 +31,8 @@ function CheckoutContent() {
   const router = useRouter()
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [loading, setLoading] = useState(true)
-  
+  const [dietDuration, setDietDuration] = useState(0)
+
   const [placeOrderLoading, setPlaceOrderLoading] = useState(false)
   const [startDate, setStartDate] = useState<Date | undefined>(() => {
     const tomorrow = new Date();
@@ -48,10 +49,10 @@ function CheckoutContent() {
     phoneNumber: '',
     email: ''
   });
-  
+
   const dietId = searchParams.get("dietid")
   console.log("Diet ID:", dietId)
-  
+
   // Default delivery times for each meal type
   const defaultDeliveryTimes = {
     breakfast: "08:00",
@@ -59,7 +60,7 @@ function CheckoutContent() {
     dinner: "19:00",
     snacks: "16:00",
   }
-  
+
   const isFormValid = () => {
     const { firstName, lastName, address, city, state, zipCode, phoneNumber, email } = formState;
 
@@ -111,7 +112,7 @@ function CheckoutContent() {
   const tax = subtotal * 0.08;
   const deliveryFee = 5.99;
   const total = subtotal + tax + deliveryFee;
-  
+
   // Prepare the order summary data
   const orderSummary = {
     subtotal: subtotal.toFixed(2),
@@ -120,7 +121,14 @@ function CheckoutContent() {
     totalAmount: total.toFixed(2),
     dietid: dietId,
   };
-  
+
+  const endDate = new Date(startDate!); // Create new Date object from startDate
+  const storedDietDuration = Number(localStorage.getItem('dietDuration')) || 0; // Parse as number and default to 0 if null
+  console.log("Stored Diet Duration:", storedDietDuration)
+  if (startDate) {
+    endDate.setDate(endDate.getDate() + storedDietDuration); // Add the duration in days
+  }
+  console.log("End Date:", endDate)
   const customerDetails = {
     firstname: formState.firstName,
     lastname: formState.lastName,
@@ -131,13 +139,15 @@ function CheckoutContent() {
     phonenumber: formState.phoneNumber,
     email: formState.email,
     startdate: startDate,
+   // endDate: endDate // Now correctly a Date object
   }
-  
+
   const cartData = {
     diet: cartItems,
     startdate: startDate,
+    endDate: endDate,
   }
-  
+
   const handlePlaceOrder = async () => {
     setPlaceOrderLoading(true)
     try {
@@ -168,8 +178,8 @@ function CheckoutContent() {
       alert("There was an error placing your order. Please try again.")
     }
   }
-  
-  if(placeOrderLoading) {
+
+  if (placeOrderLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
         <Progress value={80} className="w-60 h-2 mb-4" />
@@ -177,7 +187,7 @@ function CheckoutContent() {
       </div>
     )
   }
-  
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
@@ -334,7 +344,7 @@ function CheckoutContent() {
                     />
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">Last Name</label>

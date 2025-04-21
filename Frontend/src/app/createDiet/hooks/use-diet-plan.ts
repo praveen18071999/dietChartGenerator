@@ -412,6 +412,7 @@ const transformApiResponse = (apiResponse: any) => {
         diet: dietPlan,
         days: days,
       };
+      localStorage.setItem("dietDuration",days.toString());
       const response = await fetch(
         "http://localhost:3001/diet/createDietPlan",
         {

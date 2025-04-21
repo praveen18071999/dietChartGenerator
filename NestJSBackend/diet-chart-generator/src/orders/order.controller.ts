@@ -1,5 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from 'src/authGaurd/jwt-authgaurd';
 import { OrderService } from './order.service';
 
@@ -11,13 +19,23 @@ export class OrderController {
 
   @Get('order-confirmation/:id')
   async getOrderConfirmation(@Req() req: any, @Param('id') id: string) {
-    return this.orderService.getOrderConfirmation(id);
+    return await this.orderService.getOrderConfirmation(id);
   }
 
   @Get('order-history')
   async getOrderHistory(@Req() req: any) {
     //console.log('User ID:', req.user);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     return await this.orderService.getOrderHistory(req.user.userid);
+  }
+
+  @Patch('update-order-status/:id')
+  async updateOrderStatus(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body('status') status: string,
+  ) {
+    return await this.orderService.updateOrderStatus(id, status);
   }
   // Define your controller methods here
   // For example, you might have a method to create an order

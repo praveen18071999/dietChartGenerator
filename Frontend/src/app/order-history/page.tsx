@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useState } from "react"
@@ -6,7 +7,7 @@ import DashboardHeader from "./components/dashboard-header"
 import DietDistributionChart from "./components/diet-distribution-chart"
 import StatusDistributionChart from "./components/status-distribution-chart"
 import MonthlyTrendChart from "./components/monthly-trend-chart"
-import DietHistoryTable from "./components/diet-history-table"
+import DietHistoryTable, { DietHistoryRow } from "./components/diet-history-table"
 import NutritionBreakdown from "./components/nutrition-breakdown"
 
 export default function DietHistoryDashboard() {
@@ -20,14 +21,27 @@ export default function DietHistoryDashboard() {
   const { dietHistoryData, dietDistribution, statusDistribution, monthlyTrendData, selectedRow, handleRowSelect } =
     useDietData()
 
+    const handleRowSelectAdapter = (row: DietHistoryRow) => {
+      // Assume the row has all the properties we need, even if TypeScript doesn't know it
+      handleRowSelect(row as any);
+    }
+
   return (
     <div className="container flex flex-col w-full mx-auto p-20">
       <DashboardHeader />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-        <DietDistributionChart data={dietDistribution} isLoading={isLoading} selectedRow={selectedRow} />
+        <DietDistributionChart
+          data={dietDistribution}
+          isLoading={isLoading}
+          selectedRow={selectedRow ? { diet: selectedRow.diet } : undefined}
+        />
 
-        <StatusDistributionChart data={statusDistribution} isLoading={isLoading} selectedRow={selectedRow} />
+        <StatusDistributionChart
+          data={statusDistribution}
+          isLoading={isLoading}
+          selectedRow={selectedRow ? { diet: selectedRow.diet } : undefined}
+        />
       </div>
 
       <MonthlyTrendChart data={monthlyTrendData} isLoading={isLoading} />
@@ -36,7 +50,7 @@ export default function DietHistoryDashboard() {
         data={dietHistoryData}
         isLoading={isLoading}
         selectedRow={selectedRow}
-        onRowSelect={handleRowSelect}
+        onRowSelect={handleRowSelectAdapter}
       />
 
       {selectedRow && <NutritionBreakdown selectedRow={selectedRow} isLoading={isLoading} />}

@@ -1,127 +1,92 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { format } from "date-fns"
 
 interface DeliveryCountdownProps {
-  deliveryTime: string
+  deliveryTime: string // Format: "HH:MM"
   mealType: string
   deliveryDate: Date
 }
 
 export function DeliveryCountdown({ deliveryTime, mealType, deliveryDate }: DeliveryCountdownProps) {
-  const [timeLeft, setTimeLeft] = useState<{
+  const [timeRemaining, setTimeRemaining] = useState<{
     days: number
     hours: number
     minutes: number
     seconds: number
-    isToday: boolean
-    isTomorrow: boolean
-  }>({ days: 0, hours: 0, minutes: 0, seconds: 0, isToday: false, isTomorrow: false })
-
+    total: number
+  }>({ days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 })
+  
   useEffect(() => {
-    const calculateTimeLeft = () => {
-      const now = new Date()
-      const [deliveryHours, deliveryMinutes] = deliveryTime.split(":").map(Number)
-      
-      // Create a new date using the provided delivery date
-      const targetDeliveryDate = new Date(deliveryDate)
-      // Set the time for that specific date
-      targetDeliveryDate.setHours(deliveryHours, deliveryMinutes, 0, 0)
-      
-      // If the delivery time has already passed
-      if (targetDeliveryDate < now) {
-        return {
-          days: 0,
-          hours: 0,
-          minutes: 0,
-          seconds: 0,
-          isToday: false,
-          isTomorrow: false
-        }
-      }
-      
-      // Calculate milliseconds difference
-      const diffMs = targetDeliveryDate.getTime() - now.getTime()
-      
-      // Calculate days, hours, minutes, seconds
-      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-      const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
-      const seconds = Math.floor((diffMs % (1000 * 60)) / 1000)
-      
-      // Check if it's today or tomorrow
-      const isToday = now.getDate() === targetDeliveryDate.getDate() &&
-                       now.getMonth() === targetDeliveryDate.getMonth() &&
-                       now.getFullYear() === targetDeliveryDate.getFullYear()
-      
-      const tomorrow = new Date(now)
-      tomorrow.setDate(tomorrow.getDate() + 1)
-      
-      const isTomorrow = tomorrow.getDate() === targetDeliveryDate.getDate() &&
-                         tomorrow.getMonth() === targetDeliveryDate.getMonth() &&
-                         tomorrow.getFullYear() === targetDeliveryDate.getFullYear()
-
-      return {
-        days,
-        hours,
-        minutes,
-        seconds,
-        isToday,
-        isTomorrow
-      }
-    }
-
-    // Initial calculation
-    setTimeLeft(calculateTimeLeft())
-
-    // Update every second
+    // Parse delivery time
+    const [hours, minutes] = deliveryTime.split(":").map(Number)
+    
+    // Create a target date based on the passed deliveryDate and set the time
+    const targetDate = new Date(deliveryDate)
+    targetDate.setHours(hours, minutes, 0, 0)
+    
+    console.log("Countdown target:", targetDate)
+    console.log("Current time:", new Date())
+    
+    // Update the countdown every second
     const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft())
+      const now = new Date()
+      const difference = targetDate.getTime() - now.getTime()
+      
+      // If the delivery time has passed
+      if (difference <= 0) {
+        clearInterval(timer)
+        setTimeRemaining({ days: 0, hours: 0, minutes: 0, seconds: 0, total: 0 })
+        return
+      }
+      
+      // Calculate remaining time components
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24))
+      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000)
+      
+      setTimeRemaining({ days, hours, minutes, seconds, total: difference })
     }, 1000)
-
+    
+    // Cleanup the interval on component unmount
     return () => clearInterval(timer)
   }, [deliveryTime, deliveryDate])
-
-  // Format the delivery date message based on when it's coming
-  const getDeliveryMessage = () => {
-    if (timeLeft.isToday) {
-      return "today";
-    } else if (timeLeft.isTomorrow) {
-      return "tomorrow";
-    } else {
-      return `on ${format(deliveryDate, 'EEE, MMM d')}`;
-    }
-  };
-
+  
+  // Display the countdown
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-4 gap-3">
-        {timeLeft.days > 0 && (
-          <div className="bg-white p-4 rounded-lg border-2 text-center">
-            <p className="text-4xl font-bold text-purple-600">{timeLeft.days.toString().padStart(2, "0")}</p>
-            <p className="text-gray-500 text-sm">Days</p>
+    <div>
+      <div className="grid grid-cols-4 gap-2 my-4">
+        <div className="flex flex-col items-center">
+          <div className="bg-purple-100 w-14 h-14 rounded-lg flex items-center justify-center">
+            <span className="text-xl font-bold text-purple-800">{timeRemaining.days}</span>
           </div>
-        )}
-        <div className="bg-white p-4 rounded-lg border-2 text-center">
-          <p className="text-4xl font-bold text-purple-600">{timeLeft.hours.toString().padStart(2, "0")}</p>
-          <p className="text-gray-500 text-sm">Hours</p>
+          <span className="text-xs mt-1 text-gray-600">Days</span>
         </div>
-        <div className="bg-white p-4 rounded-lg border-2 text-center">
-          <p className="text-4xl font-bold text-purple-600">{timeLeft.minutes.toString().padStart(2, "0")}</p>
-          <p className="text-gray-500 text-sm">Minutes</p>
+        <div className="flex flex-col items-center">
+          <div className="bg-purple-100 w-14 h-14 rounded-lg flex items-center justify-center">
+            <span className="text-xl font-bold text-purple-800">{timeRemaining.hours}</span>
+          </div>
+          <span className="text-xs mt-1 text-gray-600">Hours</span>
         </div>
-        <div className="bg-white p-4 rounded-lg border-2 text-center">
-          <p className="text-4xl font-bold text-purple-600">{timeLeft.seconds.toString().padStart(2, "0")}</p>
-          <p className="text-gray-500 text-sm">Seconds</p>
+        <div className="flex flex-col items-center">
+          <div className="bg-purple-100 w-14 h-14 rounded-lg flex items-center justify-center">
+            <span className="text-xl font-bold text-purple-800">{timeRemaining.minutes}</span>
+          </div>
+          <span className="text-xs mt-1 text-gray-600">Minutes</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <div className="bg-purple-100 w-14 h-14 rounded-lg flex items-center justify-center">
+            <span className="text-xl font-bold text-purple-800">{timeRemaining.seconds}</span>
+          </div>
+          <span className="text-xs mt-1 text-gray-600">Seconds</span>
         </div>
       </div>
-
-      <div className="bg-purple-100 p-4 rounded-lg border border-purple-200">
-        <p className="text-purple-800 font-medium">
-          Your {mealType} will be delivered {getDeliveryMessage()} at {deliveryTime}.
-        </p>
-      </div>
+      
+      <p className="text-center text-gray-700">
+        Your {mealType} will be delivered at {deliveryTime} on{" "}
+        {deliveryDate.toLocaleDateString("en-US", { weekday: 'long', month: 'short', day: 'numeric' })}.
+      </p>
     </div>
   )
 }
