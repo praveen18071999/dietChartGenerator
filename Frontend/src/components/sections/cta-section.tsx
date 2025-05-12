@@ -54,7 +54,7 @@ export default function CtaSection() {
       return;
     }
   
-    const baseUrl = process.env.REACT_APP_API_BASE_URL || "http://localhost:3001";
+    const baseUrl = "http://104.248.229.28:3001";
     const url = isLoginMode ? `${baseUrl}/auth/login` : `${baseUrl}/auth/signup`;
     const payload = isLoginMode
       ? { email: formData.email, password: formData.password }
