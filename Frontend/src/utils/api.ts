@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NODE_ENV === 'production' ? 'http://104.248.229.28:3001' : 'http://localhost:3001';
+const BASE_URL = process.env.NODE_ENV === 'production' ? 'http://104.248.229.28:3001' : 'http://104.248.229.28:3001';
 console.log("API Base URL:", BASE_URL);
 const API = {
     CART_ORDER: `${BASE_URL}/cart/order`,
