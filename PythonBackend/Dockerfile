@@ -24,7 +24,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # Copy the application code
 COPY main.py .
-COPY diet_model_finetuned/ ./diet_model_finetuned/
 
 # Create a non-root user and switch to it
 RUN useradd -m -u 1000 appuser
