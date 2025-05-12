@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/authGaurd/jwt-authgaurd';
 import { CartService } from './cart.service';
 
@@ -14,4 +14,9 @@ export class CartController {
   }
   // Define your cart-related endpoints here
   // For example, add to cart, remove from cart, get cart items, etc.
+
+  @Get('upcoming-deliveries')
+  async getUpcomingDeliveries(@Req() req: any) {
+    return await this.cartService.getUpcomingDeliveries(req.user.userid);
+  }
 }

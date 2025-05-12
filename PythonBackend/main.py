@@ -88,9 +88,12 @@ async def load_model():
 def read_root():
     return {"message": "Diet Plan Generator API is running. Use /docs to view API documentation."}
 
+
 @app.post("/generate-diet-plan", response_model=DietPlanResponse)
 async def generate_diet_plan(request: DietPlanRequest):
     print(request)
+    geminiAPIKey ='AIzaSyDEog2TdCfQPOl-xfNH_5IidvCgONNVz5Y'
+    genai.configure(api_key=geminiAPIKey)
     if model is None or tokenizer is None:
         raise HTTPException(status_code=503, detail="Model is not loaded")
     
@@ -110,127 +113,117 @@ async def generate_diet_plan(request: DietPlanRequest):
             input_text += f", Height: {request.height}cm"
         if request.weight:
             input_text += f", Weight: {request.weight}kg"
-        if request.goal:
-            input_text += f", Goal: {request.goal}"
-        if request.age:
-            input_text += f", Age: {request.age} years"
         if request.otherDisease:
             input_text += f", Other diseases: {request.otherDisease}"
             
-        # Create formatted prompt
-        instruction = "Create a personalized diet plan based on the following details"
-        prompt = f"### Instruction: {instruction}\n### Input: {input_text}\n### Output:"
-        
-        # Tokenize input
-        device = next(model.parameters()).device
-        input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(device)
-        
-        # Generate text
-        with torch.no_grad():
-            output = model.generate(
-                input_ids,
-                max_length=512,
-                num_return_sequences=1,
-                do_sample=True,
-                top_p=0.92,
-                temperature=0.8,
-                repetition_penalty=1.2,
-                no_repeat_ngram_size=3,
-            )
-            
-        # Process output
-        generated_text = tokenizer.decode(output[0], skip_special_tokens=True)
-        diet_plan = generated_text.replace(prompt, "").strip()
-        
-        # Parse nutritional information (if available)
-        calories = None
-        protein = None
-        carbs = None
-        fats = None
-        
-        # Try to extract nutritional information from the generated text
-        try:
-            for line in diet_plan.split("\n"):
-                if "calories:" in line.lower() or "calorie:" in line.lower():
-                    cal_match = re.search(r'(\d+)\s*(?:kcal|calories|calorie)', line.lower())
-                    if cal_match:
-                        calories = int(cal_match.group(1))
-                
-                if "protein:" in line.lower():
-                    prot_match = re.search(r'(\d+)\s*(?:g|grams)\s*(?:protein|proteins)', line.lower())
-                    if prot_match:
-                        protein = int(prot_match.group(1))
-                        
-                if "carb" in line.lower():
-                    carb_match = re.search(r'(\d+)\s*(?:g|grams)\s*(?:carb|carbs|carbohydrates)', line.lower())
-                    if carb_match:
-                        carbs = int(carb_match.group(1))
-                        
-                if "fat" in line.lower():
-                    fat_match = re.search(r'(\d+)\s*(?:g|grams)\s*(?:fat|fats)', line.lower())
-                    if fat_match:
-                        fats = int(fat_match.group(1))
-        except Exception as extract_err:
-            logger.warning(f"Error extracting nutritional info: {str(extract_err)}")
-        geminiAPIKey ='AIzaSyDEog2TdCfQPOl-xfNH_5IidvCgONNVz5Y'
-        genai.configure(api_key=geminiAPIKey)
-        
-        # Create Gemini model
-        gemini_model = genai.GenerativeModel('gemini-2.0-flash')
-        # Call Gemini API for additional processing
-        gemini_prompt = f"""
-        Based on the following diet plan, create a well-structured JSON format with complete nutritional information.
-        
-        Generated diet plan:
-        {diet_plan}
-        
-        Please format your response as valid JSON with the following structure:
+        prompt = f"""
+You are a nutrition expert AI.
+
+Based on the following user input, generate a comprehensive personalized diet plan, including full nutritional information.
+
+User details:
+{input_text}
+
+Output ONLY a valid JSON object with the structure below. Do not include any text, explanation, markdown, or formatting outside the JSON.
+
+JSON structure:
+{{
+  "diet_plan": "The complete diet plan text with all recommendations and guidance.",
+  "daily_targets": {{
+    "calories": <number>,
+    "protein": <number>,
+    "carbs": <number>,
+    "fats": <number>,
+    "fiber": <number>,
+    "water": "<recommendation>"
+  }},
+  "meal_plan": [
+    {{
+      "day": 1,
+      "meals": [
         {{
-          "daily_targets": {{
-            "calories": <number>,
-            "protein": <number>,
-            "carbs": <number>,
-            "fats": <number>,
-            "fiber": <number>,
-            "water": "<recommendation>"
-          }},
-          "meal_plan": [
+          "meal_type": "Breakfast",
+          "foods": [
             {{
-              "day": 1,
-              "meals": [
-                {{
-                  "meal_type": "Breakfast",
-                  "foods": [
-                    {{
-                      "name": "<food item>",
-                      "portion": "<portion size>",
-                      "calories": <number>,
-                      "protein": <number>,
-                      "carbs": <number>,
-                      "fats": <number>
-                    }},
-                    ...
-                  ]
-                }},
-                ...
-              ]
-            }},
-            ...
-          ],
+              "name": "<food item>",
+              "portion": "<portion size>",
+              "calories": <number>,
+              "protein": <number>,
+              "carbs": <number>,
+              "fats": <number>
+            }}
+          ]
         }}
-        
-        Ensure each food item has its nutritional breakdown and the total matches the daily targets.
-        """
+      ]
+    }}
+  ]
+}}
+
+Ensure:
+- Each food item has full nutritional breakdown.
+- Daily totals align with daily_targets.
+- Your response must be valid JSON.
+"""
+        # Make a single call to Gemini API
+        gemini_model = genai.GenerativeModel('gemini-2.0-flash')
         response = gemini_model.generate_content(
-                gemini_prompt,
-                generation_config={
-                    "temperature": 0.5,
-                    "max_output_tokens": 4096
-                }
-            )
-        # Process Gemini API response
-        diet_plan = response.text
+            prompt,
+            generation_config={
+                "temperature": 0.5,
+                "max_output_tokens": 4096
+            }
+        )
         
+        # Process Gemini API response
+        response_text = response.text
+        
+        try:
+            # Try to parse JSON response
+            response_data = json.loads(response_text)
+            diet_plan = response_data.get("diet_plan", "")
+            
+            # Extract nutritional info from the JSON
+            daily_targets = response_data.get("daily_targets", {})
+            calories = daily_targets.get("calories")
+            protein = daily_targets.get("protein")
+            carbs = daily_targets.get("carbs")
+            fats = daily_targets.get("fats")
+            
+        except json.JSONDecodeError:
+            # If response is not valid JSON, use the raw text as diet plan
+            logger.warning("Failed to parse JSON response, using raw text")
+            diet_plan = response_text
+            
+            # Try to extract nutritional information from the text
+            calories = None
+            protein = None
+            carbs = None
+            fats = None
+            
+            # Try to extract nutritional information from the generated text
+            try:
+                for line in diet_plan.split("\n"):
+                    if "calories:" in line.lower() or "calorie:" in line.lower():
+                        cal_match = re.search(r'(\d+)\s*(?:kcal|calories|calorie)', line.lower())
+                        if cal_match:
+                            calories = int(cal_match.group(1))
+                    
+                    if "protein:" in line.lower():
+                        prot_match = re.search(r'(\d+)\s*(?:g|grams)\s*(?:protein|proteins)', line.lower())
+                        if prot_match:
+                            protein = int(prot_match.group(1))
+                            
+                    if "carb" in line.lower():
+                        carb_match = re.search(r'(\d+)\s*(?:g|grams)\s*(?:carb|carbs|carbohydrates)', line.lower())
+                        if carb_match:
+                            carbs = int(carb_match.group(1))
+                            
+                    if "fat" in line.lower():
+                        fat_match = re.search(r'(\d+)\s*(?:g|grams)\s*(?:fat|fats)', line.lower())
+                        if fat_match:
+                            fats = int(fat_match.group(1))
+            except Exception as extract_err:
+                logger.warning(f"Error extracting nutritional info: {str(extract_err)}")
         
         return DietPlanResponse(
             diet_plan=diet_plan,
@@ -243,7 +236,6 @@ async def generate_diet_plan(request: DietPlanRequest):
     except Exception as e:
         logger.error(f"Error generating diet plan: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error generating diet plan: {str(e)}")
-
 # For direct execution
 if __name__ == "__main__":
     import re  # Import here for pattern matching

@@ -5,6 +5,7 @@ import { ConditionalSidebar } from "@/components/conditionalSidebar";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { ToasterProvider } from "@/components/providers/toast-provider";
 import { AuthCheck } from "@/utils/auth";
+import  AdminPanelLayout  from "@/components/admin-panel/admin-panel-layout";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Diet Chart Generator",
+  title: "FitFuel",
   description: "Generate personalized diet plans",
 };
 
@@ -34,6 +35,7 @@ export default function RootLayout({
             <ToasterProvider />
           </ConditionalSidebar>
         </ThemeProvider>
+        
       </body>
     </html>
   );

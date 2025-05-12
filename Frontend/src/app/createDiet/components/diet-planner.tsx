@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 import { useRouter } from "next/navigation"
-import { Apple, Share2, Activity } from "lucide-react"
+import { Apple, Share2, Activity, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,6 +16,7 @@ import { CartDialog } from "../components/cart-dialog"
 import { ChatDialog } from "../components/chat-dialog"
 import { ProfileForm } from "../components/profile-form"
 import { ProfileSummary } from "../components/profile-summary"
+
 
 const diseases = [
   { id: "diabetes", label: "Diabetes" },
@@ -53,6 +54,7 @@ export default function DietPlanner(dietId: any) {
     setHasDietChanged, // Add this line
     originalDietPlan, // Add this line
     setOriginalDietPlan, // Add this line
+    loading,
   } = useDietPlan(dietId)
 
   const { cartItems, showCartDialog, setShowCartDialog, addToCart, removeFromCart, getTotalCartPrice } = useCart()
@@ -83,7 +85,26 @@ export default function DietPlanner(dietId: any) {
     const totals = calculateDailyTotals()
     shareDietPlan(dietDuration, totals.calories, totals.protein, totals.carbs, totals.fats)
   }
-
+  if(loading) { 
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-white px-4">
+        <div className="text-center space-y-6">
+          <div className="relative">
+            <Loader2 className="h-16 w-16 animate-spin text-purple-600 mx-auto" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Apple className="h-6 w-6 text-purple-800" />
+            </div>
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold mb-2">Loading Your Diet Plan</h2>
+            <p className="text-muted-foreground max-w-md">
+              We&apos;re retrieving your personalized diet plan. This will just take a moment...
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="flex flex-col flex-grow w-full h-full min-h-screen bg-white overflow-hidden px-4 py-6">
       <div className="max-w-full mx-auto w-full space-y-10">

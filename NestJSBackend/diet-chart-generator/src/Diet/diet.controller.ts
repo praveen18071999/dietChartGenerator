@@ -67,4 +67,16 @@ export class DietController {
   ): Promise<any> {
     return this.dietService.getDietChartById(id);
   }
+
+  @Get('dietHistory')
+  async getDietHistory(@Req() req: any): Promise<any> {
+    const userId = req.user.userid; // Assuming user ID is available in the request
+    return this.dietService.getDietHistory(userId);
+  }
+
+  @Get('nutritionBreakdown')
+  async getNutritionBreakdown(@Req() req: any): Promise<any> {
+    const userId = req.user.userid; // Assuming user ID is available in the request
+    return this.dietService.getNutritionBreakdown(userId);
+  }
 }

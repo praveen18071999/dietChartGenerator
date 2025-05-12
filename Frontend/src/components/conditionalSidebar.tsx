@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import  AdminPanelLayout  from "@/components/admin-panel/admin-panel-layout";
 
 export function ConditionalSidebar({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -10,16 +11,10 @@ export function ConditionalSidebar({ children }: { children: React.ReactNode }) 
   
   if (!starterPagePath) {
     return (
-      <SidebarProvider>
-        <AppSidebar />
-        <main>
-          <SidebarTrigger />
-          {children}
-        </main>
-      </SidebarProvider>
+        <AdminPanelLayout>{children}</AdminPanelLayout>
     );
   }
   
   // Don't render sidebar components on patch/ routes
-  return <div className="min-h-screen">{children}</div>;
+  return <div >{children}</div>;
 }

@@ -178,4 +178,41 @@ export class CartService {
       };
     }
   }
+
+  async getUpcomingDeliveries(userId: string): Promise<any> {
+    try {
+      const { data, error } = await this.databaservice
+        .getClient()
+        .rpc('upcomingdeliveries', {
+          userid: userId,
+        });
+      if (!data) {
+        return {
+          success: false,
+          message: 'No upcoming deliveries found',
+        };
+      }
+
+      if (error) {
+        console.error('Error fetching upcoming deliveries:', error);
+        return {
+          success: false,
+          message: 'Failed to fetch upcoming deliveries',
+          error: error.message,
+        };
+      }
+
+      return {
+        success: true,
+        data: data,
+      };
+    } catch (error) {
+      console.error('Error in getUpcomingDeliveries:', error);
+      return {
+        success: false,
+        message: 'Failed to fetch upcoming deliveries',
+        error: error.message || 'Unknown error occurred',
+      };
+    }
+  }
 }

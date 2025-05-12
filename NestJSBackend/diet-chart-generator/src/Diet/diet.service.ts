@@ -19,7 +19,12 @@ export class DietService {
       const { data, error } = await supabase
         .from('Diet')
         .insert([
-          { generatedBy: userid, diet: dietData.diet, days: dietData.days },
+          {
+            generatedBy: userid,
+            diet: dietData.diet,
+            days: dietData.days,
+            name: dietData.name,
+          },
         ])
         .select();
 
@@ -373,6 +378,104 @@ export class DietService {
       }
       this.logger.error(
         `Unexpected error deleting diet chart by ID: ${error.message}`,
+      );
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: 'An unexpected error occurred',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getDietHistory(userid: string): Promise<any> {
+    try {
+      const supabase = this.databaseService.getClient();
+      const { data, error } = await supabase.rpc('diethistory', {
+        userid: userid,
+      });
+      //return data;
+      if (error) {
+        this.logger.error(
+          `Database error fetching diet history: ${error.message}`,
+        );
+        throw new HttpException(
+          {
+            status: HttpStatus.BAD_REQUEST,
+            error: `Failed to fetch diet history: ${error.message}`,
+          },
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      if (!data || data.length === 0) {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'No diet history found for this user',
+          data: [],
+        };
+      }
+
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'Diet history retrieved successfully',
+        data: data,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(
+        `Unexpected error fetching diet history: ${error.message}`,
+      );
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: 'An unexpected error occurred',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getNutritionBreakdown(userid: string) {
+    try {
+      const { data, error } = await this.databaseService
+        .getClient()
+        .rpc('nutritionbreakdown', {
+          userid: userid,
+        });
+      if (error) {
+        this.logger.error(
+          `Database error fetching nutrition breakdown: ${error.message}`,
+        );
+        throw new HttpException(
+          {
+            status: HttpStatus.BAD_REQUEST,
+            error: `Failed to fetch nutrition breakdown: ${error.message}`,
+          },
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      if (!data || data.length === 0) {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'No nutrition breakdown found for this user',
+          data: [],
+        };
+      }
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'Nutrition breakdown retrieved successfully',
+        data: data,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(
+        `Unexpected error fetching nutrition breakdown: ${error.message}`,
       );
       throw new HttpException(
         {

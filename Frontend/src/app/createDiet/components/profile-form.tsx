@@ -14,6 +14,7 @@ import type { UserProfile } from "../hooks/use-diet-plan"
 import { useEffect } from "react"
 
 const formSchema = z.object({
+  dietName: z.string().min(1, { message: "Diet name is required" }),
   height: z.string().min(1, { message: "Height is required" }),
   weight: z.string().min(1, { message: "Weight is required" }),
   age: z.string().min(1, { message: "Age is required" }),
@@ -53,6 +54,7 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress, initia
       activityLevel: (initialProfile?.activityLevel as "none" | "light" | "moderate" | "high" | "very high") || "none",
       diseases: initialProfile?.diseases || [],
       otherDisease: initialProfile?.otherDisease || "",
+      dietName: initialProfile?.dietName || "",
     },
   })
   useEffect(() => {
@@ -67,6 +69,7 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress, initia
         activityLevel: initialProfile.activityLevel as any || "none",
         diseases: initialProfile.diseases || [],
         otherDisease: initialProfile.otherDisease || "",
+        dietName: initialProfile.dietName || "",
       });
     }
   }, [initialProfile, form]);
@@ -88,6 +91,7 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress, initia
       activityLevel: values.activityLevel,
       diseases: values.diseases || [],
       otherDisease: values.otherDisease || "",
+      dietName: values.dietName,
     })
   }
 
@@ -95,6 +99,30 @@ export function ProfileForm({ onSubmit, isGenerating, generationProgress, initia
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <FormField
+  control={form.control}
+  name="dietName"
+  render={({ field }) => (
+    <FormItem className="col-span-1 md:col-span-3">
+      <FormLabel className="text-lg">Diet Plan Name</FormLabel>
+      <FormControl>
+        <Input 
+          placeholder="e.g. My Summer Diet Plan" 
+          {...field} 
+          className="h-14 text-lg" 
+          onChange={(e) => {
+            field.onChange(e);
+            handleFieldChange('dietName', e.target.value);
+          }}
+        />
+      </FormControl>
+      <FormDescription className="text-base">
+        Give your diet plan a meaningful name to easily identify it later
+      </FormDescription>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
           <FormField
             control={form.control}
             name="height"

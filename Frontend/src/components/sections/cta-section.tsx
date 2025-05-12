@@ -108,11 +108,11 @@ export default function CtaSection() {
           showToast.success('Login Successful!');
           setSuccessMessage('Login Successful!');
           
-          // Redirect to createDiet page after login
+          // Redirect to progress page after login
           setTimeout(() => {
             setIsPopupOpen(false);
-            router.push("/createDiet");
-          }, 1500);
+            router.push("/progress");
+          }, 15);
         } else {
           showToast.error("Login failed. No access token received.");
           setErrorMessage("Login failed. Please try again.");

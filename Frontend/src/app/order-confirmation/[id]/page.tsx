@@ -349,7 +349,7 @@ export default function OrderConfirmationPage() {
     }, [nextDelivery]);
   if (loading) {
     return (
-      <div className="min-h-screen flex justify-end items-center p-8">
+      <div className="min-h-screen flex justify-center items-center p-8">
         <div className="text-center">
           <Progress value={80} className="w-60 h-2 mb-4" />
           <p className="text-gray-500">Loading your order details...</p>
@@ -573,13 +573,7 @@ export default function OrderConfirmationPage() {
                   </div>
                 </div>
               </CardContent>
-              {orderStatus === "delivered" && (
-                <CardFooter>
-                  <Button className="w-full h-12 text-lg">
-                    Order Again
-                  </Button>
-                </CardFooter>
-              )}
+              
             </Card>
           </div>
         </div>

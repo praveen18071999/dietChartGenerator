@@ -24,6 +24,7 @@ export type UserProfile = {
   activityLevel: string;
   diseases: string[];
   otherDisease?: string;
+  dietName?: string;
 };
 
 export const mealColors = {
@@ -81,6 +82,7 @@ export function useDietPlan(dietId: { dietId: string }) {
   const [originalDietDuration, setOriginalDietDuration] = useState<number>(7);
   const [originalProfile, setOriginalProfile] = useState<UserProfile | null>(null);
   const [profileVersion, setProfileVersion] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   const [deliveryTimes, setDeliveryTimes] = useState({
     breakfast: "08:00",
@@ -193,7 +195,7 @@ export function useDietPlan(dietId: { dietId: string }) {
       };
 
       // Make API call
-      const response = await fetch("http://localhost:8080/generate-diet-plan", {
+      const response = await fetch("http://localhost:8000/generate-diet-plan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -341,6 +343,7 @@ const transformApiResponse = (apiResponse: any) => {
   };
   const createdDiet = async(id:string) => {
     try {
+      setLoading(true);
       const response = await fetch(
         `http://localhost:3001/diet/getDietChartById/${id}`,
         {
@@ -356,12 +359,12 @@ const transformApiResponse = (apiResponse: any) => {
         throw new Error(`Network response was not ok: ${response?.status ?? "unknown"}`);
       }
       const data = await response?.json?.() ?? {};
-      console.log("Loaded diet data:", data);
+      //console.log("Loaded diet data:", data);
       
       // Properly map the user specifications to the profile format
       if (data.data[0]["User Specifications"] && data.data[0]["User Specifications"].length > 0) {
         const userSpec = data.data[0]["User Specifications"][0];
-        
+        //console.log( data.data[0].dietName)
         if (userSpec) {
           const profile: UserProfile = {
             height: userSpec.height || "",
@@ -372,6 +375,7 @@ const transformApiResponse = (apiResponse: any) => {
             activityLevel: userSpec.activityLevel || "none",
             diseases: userSpec.diseases || [],
             otherDisease: userSpec.otherDisease || "",
+            dietName: data.data[0].name || "",
           };
           
           profileRef.current = profile;
@@ -393,6 +397,7 @@ const transformApiResponse = (apiResponse: any) => {
       setGenerationProgress(100);
       setDietDuration(data.data[0].days || 7);
       setOriginalDietDuration(data.data[0].days || 7);
+      setLoading(false);
     } catch (error) {
       console.error("Error loading diet plan:", error);
       setIsGenerating(false);
@@ -411,8 +416,10 @@ const transformApiResponse = (apiResponse: any) => {
       const apiData = {
         diet: dietPlan,
         days: days,
+        name: profileRef.current.dietName,
       };
       localStorage.setItem("dietDuration",days.toString());
+      setLoading(true);
       const response = await fetch(
         "http://localhost:3001/diet/createDietPlan",
         {
@@ -433,6 +440,7 @@ const transformApiResponse = (apiResponse: any) => {
 
       const data = await response.json();
       await createUserSpecification(data.data[0].id);
+      setLoading(false);
       router.push(`/createDiet/${data.data[0].id}`);
       //createdDiet(data.data[0].id);
     } catch (error) {
@@ -544,5 +552,6 @@ const transformApiResponse = (apiResponse: any) => {
     setOriginalDietPlan, // Add this line
     updateProfileField,
     profileVersion,
+    loading,
   };
 }

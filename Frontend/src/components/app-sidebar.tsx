@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useState, useEffect } from "react"
 import {
   AudioWaveform,
   BookOpen,
@@ -27,21 +28,24 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
-// This is sample data.
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  teams: [
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  // Add state for user data
+  const [userData, setUserData] = useState({
+    name: "",
+    email: "",
+    avatar: "/avatars/default-avatar.jpg", // Default avatar
+  });
+
+  // Static parts of the data
+  const teamsData = [
     {
       name: "Consistency",
       logo: GalleryVerticalEnd,
       plan: "Get Your Diet",
     }
-  ],
-  navMain: [
+  ];
+
+  const navMainData = [
     {
       title: "Dashboard",
       url: "#",
@@ -50,16 +54,12 @@ const data = {
       items: [
         {
           title: "Profile",
-          url: "#",
+          url: "/profile",
         },
         {
           title: "Progress",
-          url: "#",
-        },
-        {
-          title: "Blogs",
-          url: "#",
-        },
+          url: "/progress",
+        }
       ],
     },
     {
@@ -68,14 +68,9 @@ const data = {
       icon: Bot,
       items: [
         {
-          title: "My Reports",
-          url: "#",
-        },
-        {
           title: "Diet Plan",
           url: "/createDiet",
         },
-        
       ],
     },
     {
@@ -85,11 +80,11 @@ const data = {
       items: [
         {
           title: "Medical History",
-          url: "#",
+          url: "/medical-history",
         },
         {
           title: "Diet Plan History",
-          url: "#",
+          url: "diet-history",
         },
         {
           title: "Diet Order History",
@@ -97,57 +92,75 @@ const data = {
         },
         {
           title: "Payment History",
-          url: "#",
+          url: "/payment-history",
         },
       ],
     },
-    {
-      title: "Our Experts",
-      url: "#",
-      icon: SearchCheck,
-      items: [
-        {
-          title: "Doctors",
-          url: "#",
-        },
-        {
-          title: "Trainers",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  // projects: [
-  //   {
-  //     name: "Design Engineering",
-  //     url: "#",
-  //     icon: Frame,
-  //   },
-  //   {
-  //     name: "Sales & Marketing",
-  //     url: "#",
-  //     icon: PieChart,
-  //   },
-  //   {
-  //     name: "Travel",
-  //     url: "#",
-  //     icon: Map,
-  //   },
-  // ],
-}
+  ];
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  // Effect to fetch user data when component mounts
+  useEffect(() => {
+    async function fetchUserData() {
+      try {
+        // Try to get the token from session storage
+        const token = sessionStorage.getItem("token");
+        
+        if (!token) {
+          console.log("No authentication token found");
+          return;
+        }
+        
+        const response = await fetch("http://localhost:3001/profile/get-profile", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch user data");
+        }
+        
+        const data = await response.json();
+        console.log("User Data:", data);
+        // Update the user data state with fetched information
+        setUserData({
+          name: data.data.user.name || "User",
+          email: data.data.user.email || "",
+          avatar: userData.avatar // Retain the current avatar value
+        });
+        
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        
+        // Try to get user info from session storage as fallback
+        const username = sessionStorage.getItem("username");
+        const email = sessionStorage.getItem("email");
+        
+        if (username || email) {
+          setUserData({
+            name: username || "User",
+            email: email || "",
+            avatar: "/avatars/default-avatar.jpg"
+          });
+        }
+      }
+    }
+    
+    fetchUserData();
+  }, []);
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <TeamSwitcher teams={teamsData} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        {/* <NavProjects projects={data.projects} /> */}
+        <NavMain items={navMainData} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
