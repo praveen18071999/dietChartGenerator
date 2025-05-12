@@ -1,4 +1,5 @@
-const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001';
+const BASE_URL = process.env.NODE_ENV === 'production' ? 'http://104.248.229.28:3001' : 'http://localhost:3001';
+console.log("API Base URL:", BASE_URL);
 const API = {
     CART_ORDER: `${BASE_URL}/cart/order`,
     USERSPEC_CREATEUSERSPEC: `${BASE_URL}/userspec/createUserSpecification`,
@@ -15,6 +16,7 @@ const API = {
     TRANSACTION_HISTORY: `${BASE_URL}/transaction/history`,
     DIET_NUTRITIONBREAKDOWN: `${BASE_URL}/diet/nutritionBreakdown`,
     CART_UPCOMINGDELIVERIES: `${BASE_URL}/cart/upcoming-deliveries`,
+    GENERATE_DIETPLAN: `http://104.248.229.28:8000/generate-diet-plan`,
 
 }
 export default API;
