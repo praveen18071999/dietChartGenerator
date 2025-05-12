@@ -196,7 +196,7 @@ export function useDietPlan(dietId: { dietId: string }) {
       };
 
       // Make API call
-      const response = await fetch("http://localhost:8000/generate-diet-plan", {
+      const response = await fetch(API.GENERATE_DIETPLAN, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
