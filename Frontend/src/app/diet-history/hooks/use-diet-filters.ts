@@ -2,6 +2,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import API from "@/utils/api"
 
 export type DietPlan = {
   id: string
@@ -161,7 +162,7 @@ const processDietData = (apiData: any[]): DietPlan[] => {
       return;
     }
 
-    fetch("http://localhost:3001/diet/dietHistory", {
+    fetch(API.DIET_DIETHISTORY, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

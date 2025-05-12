@@ -2,6 +2,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import API from "@/utils/api"
 
 type NutrientData = {
   name: string
@@ -52,7 +53,7 @@ export function useNutritionBreakdown() {
   useEffect(() => {
     async function fetchNutritionBreakdown() {
       try {
-        const response = await fetch("http://localhost:3001/diet/nutritionBreakdown", {
+        const response = await fetch(API.DIET_NUTRITIONBREAKDOWN, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

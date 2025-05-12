@@ -2,6 +2,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import API from "@/utils/api"
 
 type Delivery = {
   id: string
@@ -27,7 +28,7 @@ export function useUpcomingDeliveries() {
   useEffect(() => {
     async function fetchUpcomingDeliveries() {
       try {
-        const response = await fetch("http://localhost:3001/cart/upcoming-deliveries", {
+        const response = await fetch(API.CART_UPCOMINGDELIVERIES, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

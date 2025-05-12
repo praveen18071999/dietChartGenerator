@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import API from "@/utils/api";
 
 // Generate diet distribution data
 const getDietDistribution = (data: { diet: string }[]) => {
@@ -200,7 +201,7 @@ export function useDietData() {
   };
 
   useEffect(() => {
-    fetch("http://localhost:3001/orders/order-history", {
+    fetch(API.ORDER_ORDERHISTORY, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

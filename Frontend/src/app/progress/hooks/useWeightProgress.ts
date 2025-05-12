@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import API from "@/utils/api"
 
 type WeightData = {
   date: string
@@ -17,7 +18,7 @@ export function useWeightProgress() {
   useEffect(() => {
     async function fetchWeightProgress() {
       try {
-        const response = await fetch("http://localhost:3001/profile/weight-history", {
+        const response = await fetch(API.PROFILE_WEIGHTHISTORY, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

@@ -2,6 +2,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import API from "@/utils/api";
 
 // Transform API data to match our app's format
 const transformPaymentData = (apiData:any) => {
@@ -78,7 +79,7 @@ useEffect(() => {
     setLoading(true);
     const token = sessionStorage.getItem("token");
     
-    fetch("http://localhost:3001/transaction/history", {
+    fetch(API.TRANSACTION_HISTORY, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

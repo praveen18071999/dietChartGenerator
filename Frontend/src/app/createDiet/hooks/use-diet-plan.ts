@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+import API from "@/utils/api";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useCallback, useEffect } from "react";
 
@@ -321,7 +322,7 @@ const transformApiResponse = (apiResponse: any) => {
     const apiData = profileRef.current;
 
     const response = await fetch(
-      `http://localhost:3001/userspec/createUserSpecification/${id}`,
+      `${API.USERSPEC_CREATEUSERSPEC}/${id}`,
       {
         method: "POST",
         headers: {
@@ -345,7 +346,7 @@ const transformApiResponse = (apiResponse: any) => {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:3001/diet/getDietChartById/${id}`,
+        `${API.DIET_GETDIETCHARTBYID}/${id}`,
         {
           method: "GET",
           headers: {
@@ -421,7 +422,7 @@ const transformApiResponse = (apiResponse: any) => {
       localStorage.setItem("dietDuration",days.toString());
       setLoading(true);
       const response = await fetch(
-        "http://localhost:3001/diet/createDietPlan",
+        API.DIET_CREATEDIETPLAN,
         {
           method: "POST",
           headers: {
@@ -459,7 +460,7 @@ const transformApiResponse = (apiResponse: any) => {
       };
       console.log("API Data:", apiData);
       const response = await fetch(
-        `http://localhost:3001/diet/updateDietChartById/${dietId.dietId}`,
+        `${API.DIET_UPDATEDIETCHARTBYID}/${dietId.dietId}`,
         {
           method: "PATCH",
           headers: {

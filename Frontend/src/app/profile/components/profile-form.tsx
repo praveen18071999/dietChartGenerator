@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
+import API from "@/utils/api"
 
 const profileFormSchema = z.object({
   // Personal Information
@@ -125,7 +126,7 @@ export default function ProfileForm() {
       return;
     }
 
-    fetch("http://localhost:3001/profile/get-profile", {
+    fetch(API.PROFILE_GETPROFILE, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -208,7 +209,7 @@ export default function ProfileForm() {
       dietaryRestrictions,
     };
 
-    fetch('http://localhost:3001/profile/update-profile', {
+    fetch(API.PROFILE_UPDATEPROFILE, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',

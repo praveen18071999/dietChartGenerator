@@ -7,13 +7,11 @@ services:
       context: ./NestJSBackend/diet-chart-generator
       dockerfile: Dockerfile
     container_name: diet-chart-nestjs
-    ports:
-      - "3002:3001"  # Map container port 3001 to host port 3002
     environment:
       - NODE_ENV=production
       - PYTHON_API_URL=http://python-backend:8000
-    depends_on:
-      - python-backend
+    ports:
+      - "3001:3001"
     networks:
       - diet-chart-network
     restart: unless-stopped
@@ -24,12 +22,43 @@ services:
       context: ./PythonBackend
       dockerfile: Dockerfile
     container_name: diet-chart-python
-    ports:
-      - "8080:8000"  # Map container port 8000 to host port 8080
     environment:
       - GEMINI_API_KEY=AIzaSyDEog2TdCfQPOl-xfNH_5IidvCgONNVz5Y
     volumes:
       - ./PythonBackend/diet_model_finetuned:/app/diet_model_finetuned
+    ports:
+      - "8000:8000"
+    networks:
+      - diet-chart-network
+    restart: unless-stopped
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: diet-chart-frontend
+    environment:
+      - NODE_ENV=production
+      - REACT_APP_API_BASE_URL=104.248.229.28
+    ports:
+      - "3000:3000"
+    networks:
+      - diet-chart-network
+    restart: unless-stopped
+
+  # NGINX Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: diet-chart-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - nestjs-backend
+      - python-backend
     networks:
       - diet-chart-network
     restart: unless-stopped
@@ -37,7 +66,3 @@ services:
 networks:
   diet-chart-network:
     driver: bridge
-
-# Remove this if you don't actually need it
-# volumes:
-#   model-data:

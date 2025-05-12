@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useState } from "react"
@@ -18,6 +19,7 @@ import {
 import { Progress } from "@/components/ui/progress"
 
 interface DietPlan {
+  dietid: any
   id: string
   title: string
   date: string

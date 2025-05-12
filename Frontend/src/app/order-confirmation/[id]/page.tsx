@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress"
 import { DeliveryCountdown } from "@/components/delivery-countdown"
 import { format } from "date-fns"
 import { OrderStatus } from "./components/order-status"
+import API from "@/utils/api"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -83,7 +84,7 @@ export default function OrderConfirmationPage() {
   }
   useEffect(() => {
     setLoading(true);
-    fetch(`http://localhost:3001/orders/order-confirmation/${orderId}`, {
+    fetch(`${API.ORDER_ORDERCONFIRMATION}/${orderId}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -310,7 +311,7 @@ export default function OrderConfirmationPage() {
       const apiData = {
         status: "Cancelled",
       }
-      const response = await fetch(`http://localhost:3001/orders/update-order-status/${orderId}`, {
+      const response = await fetch(`${API.ORDER_UPDATEORDERSTATUS}/${orderId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

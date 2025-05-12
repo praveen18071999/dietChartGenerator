@@ -27,6 +27,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import API from "@/utils/api"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Add state for user data
@@ -110,7 +111,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           return;
         }
         
-        const response = await fetch("http://localhost:3001/profile/get-profile", {
+        const response = await fetch(API.PROFILE_GETPROFILE, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

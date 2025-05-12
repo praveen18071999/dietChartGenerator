@@ -12,6 +12,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
+import API from "@/utils/api"
 
 type CartItem = {
   id: string
@@ -151,7 +152,7 @@ function CheckoutContent() {
   const handlePlaceOrder = async () => {
     setPlaceOrderLoading(true)
     try {
-      const response = await fetch("http://localhost:3001/cart/order", {
+      const response = await fetch(API.CART_ORDER, {
         method: "POST",
         headers: {
           "Accept": "application/json",

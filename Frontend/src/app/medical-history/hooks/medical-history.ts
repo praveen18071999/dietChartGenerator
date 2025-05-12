@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from "react"
+import API from "@/utils/api"
 
 export function useMedicalHistory() {
     const [isLoading, setIsLoading] = useState(true)
@@ -8,7 +9,7 @@ export function useMedicalHistory() {
     
     // Simulate loading for demo purposes
     useEffect(() => {
-       fetch('http://localhost:3001/profile/get-profile',{
+       fetch(API.PROFILE_GETPROFILE,{
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
