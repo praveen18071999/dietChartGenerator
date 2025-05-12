@@ -89,7 +89,7 @@ def read_root():
     return {"message": "Diet Plan Generator API is running. Use /docs to view API documentation."}
 
 
-@app.post("http://104.248.229.28:8000/generate-diet-plan", response_model=DietPlanResponse)
+@app.post("/generate-diet-plan", response_model=DietPlanResponse)
 async def generate_diet_plan(request: DietPlanRequest):
     print(request)
     geminiAPIKey ='AIzaSyDEog2TdCfQPOl-xfNH_5IidvCgONNVz5Y'
