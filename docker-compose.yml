@@ -40,7 +40,6 @@ services:
     container_name: diet-chart-frontend
     environment:
       - NODE_ENV=production
-      - REACT_APP_API_BASE_URL=104.248.229.28
     ports:
       - "3000:3000"
     networks:
