@@ -16,21 +16,20 @@ services:
       - diet-chart-network
     restart: unless-stopped
 
- 
   # Next.js Frontend
   frontend:
-  build:
-    context: ./Frontend
-    dockerfile: Dockerfile
-  container_name: diet-chart-frontend
-  environment:
-    - NODE_ENV=production
-    - NODE_OPTIONS=--max_old_space_size=4096
-  ports:
-    - "3000:3000"
-  networks:
-    - diet-chart-network
-  restart: unless-stopped
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: diet-chart-frontend
+    environment:
+      - NODE_ENV=production
+      - NODE_OPTIONS=--max_old_space_size=4096
+    ports:
+      - "3000:3000"
+    networks:
+      - diet-chart-network
+    restart: unless-stopped
 
   # NGINX Reverse Proxy
   nginx:
