@@ -10,8 +10,9 @@ COPY package*.json ./
 # Install build dependencies
 RUN apk add --no-cache make gcc g++ python3 py-pip
 
-# Install dependencies
+# Install dependencies including Google AI
 RUN npm ci
+RUN npm install @google/generative-ai
 
 # Copy source code
 COPY . .
@@ -32,6 +33,7 @@ COPY package*.json ./
 # Install only production dependencies and bcrypt
 RUN apk add --no-cache make gcc g++ python3 && \
     npm ci --only=production && \
+    npm install @google/generative-ai && \
     npm rebuild bcrypt --build-from-source && \
     apk del make gcc g++ python3
 
