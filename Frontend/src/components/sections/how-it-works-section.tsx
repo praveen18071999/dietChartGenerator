@@ -2,8 +2,8 @@ export default function HowItWorksSection() {
     const steps = [
       {
         number: 1,
-        title: "Upload Your Reports",
-        description: "Securely upload your medical reports and health data through our HIPAA-compliant platform.",
+        title: "Upload Your Data",
+        description: "Upload your medical Data and health data through our platform.",
       },
       {
         number: 2,

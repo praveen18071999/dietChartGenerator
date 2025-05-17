@@ -29,7 +29,7 @@ export function useCart() {
     // Make sure the item has a mealType and deliveryTime
     const itemWithDetails = {
       ...item,
-      id: Math.random().toString(36).substring(7),
+      //id: Math.random().toString(36).substring(7),
       mealType: item.mealType || "snacks", // Default to snacks if no meal type
       deliveryTime: deliveryTime,
     }
@@ -64,6 +64,7 @@ export function useCart() {
     addToCart,
     removeFromCart,
     getTotalCartPrice,
+    setCartItems,
   }
 }
 

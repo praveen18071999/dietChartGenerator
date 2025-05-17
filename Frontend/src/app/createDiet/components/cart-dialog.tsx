@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { ShoppingCart, Trash2 } from "lucide-react"
+import { ShoppingCart, Trash2, InfoIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -14,6 +15,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import type { MealItem } from "../hooks/use-diet-plan"
 
 interface CartDialogProps {
@@ -23,6 +25,7 @@ interface CartDialogProps {
   removeFromCart: (itemId: string) => void
   getTotalCartPrice: () => string
   proceedToCheckout: () => void
+  dietId: string
 }
 
 export function CartDialog({
@@ -32,6 +35,7 @@ export function CartDialog({
   removeFromCart,
   getTotalCartPrice,
   proceedToCheckout,
+  dietId,
 }: CartDialogProps) {
   return (
     <Dialog open={showCartDialog} onOpenChange={setShowCartDialog}>
@@ -91,6 +95,16 @@ export function CartDialog({
               </div>
             </>
           )}
+          
+          {/* Checkout reminder */}
+          {!dietId && cartItems.length > 0 && (
+            <Alert className="bg-amber-50 text-amber-800 border-amber-300">
+              <InfoIcon className="h-4 w-4 mr-2" />
+              <AlertDescription>
+                Please save your diet plan before proceeding to checkout.
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
         <DialogFooter className="sm:justify-between">
           <DialogClose asChild>
@@ -100,7 +114,7 @@ export function CartDialog({
           </DialogClose>
           <Button
             className="bg-purple-600 hover:bg-purple-500 text-white text-lg h-12"
-            disabled={cartItems.length === 0}
+            disabled={cartItems.length === 0 || !dietId}
             onClick={proceedToCheckout}
           >
             Proceed to Checkout
@@ -110,4 +124,3 @@ export function CartDialog({
     </Dialog>
   )
 }
-

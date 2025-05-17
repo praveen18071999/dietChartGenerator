@@ -7,6 +7,7 @@ import { CartModule } from './cart/cart.module';
 import { OrderModule } from './orders/order.module';
 import { TransactionModule } from './transaction/transaction.module';
 import { ProfileModule } from './profile/profile.module';
+import { DietGeneratorModule } from './dietGenerator/diet.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ProfileModule } from './profile/profile.module';
     OrderModule,
     TransactionModule,
     ProfileModule,
+    DietGeneratorModule,
   ],
   controllers: [],
   providers: [],

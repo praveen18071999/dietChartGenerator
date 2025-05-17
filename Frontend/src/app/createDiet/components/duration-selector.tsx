@@ -14,7 +14,7 @@ export function DurationSelector({ duration, onDurationChange, goal }: DurationS
       <h3 className="text-2xl font-bold mb-4">Diet Plan Duration</h3>
       <div className="space-y-4">
         <p className="text-lg text-gray-600">Select how many days you should follow this diet plan:</p>
-        <div className="flex items-center gap-4">
+        <div className="grid grid-cols-2 md:flex md:flex-wrap gap-2 md:gap-4">
         <Button
             variant={duration === 1 ? "default" : "outline"}
             onClick={() => onDurationChange(1)}

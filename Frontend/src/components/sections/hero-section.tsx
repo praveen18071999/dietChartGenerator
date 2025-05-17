@@ -18,7 +18,7 @@ export default function HeroSection() {
                 <span className="text-primary">Powered by AI</span>
               </h1>
               <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                Upload your medical reports and health data. Our AI analyzes your unique needs and creates a customized
+                Upload your medical  and health data. Our AI analyzes your unique needs and creates a customized
                 nutrition plan for optimal health.
               </p>
             </div>

@@ -39,7 +39,7 @@ export function MobileSidebarTrigger() {
         
         <SheetContent side="left" className="w-[270px] p-0">
           <SheetHeader className="p-4 border-b">
-            <SheetTitle className="font-bold text-lg">FirFuel</SheetTitle>
+            <SheetTitle className="font-bold text-lg">FitFuel</SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-auto py-2">
             <SidebarMenu isOpen={true} />

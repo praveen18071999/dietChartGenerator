@@ -16,22 +16,7 @@ services:
       - diet-chart-network
     restart: unless-stopped
 
-  # Python Backend with AI Model
-  python-backend:
-    build:
-      context: ./PythonBackend
-      dockerfile: Dockerfile
-    container_name: diet-chart-python
-    environment:
-      - GEMINI_API_KEY=AIzaSyDEog2TdCfQPOl-xfNH_5IidvCgONNVz5Y
-    volumes:
-      - ./PythonBackend/diet_model_finetuned:/app/diet_model_finetuned
-    ports:
-      - "8000:8000"
-    networks:
-      - diet-chart-network
-    restart: unless-stopped
-
+ 
   # Next.js Frontend
   frontend:
     build:
@@ -57,7 +42,6 @@ services:
     depends_on:
       - frontend
       - nestjs-backend
-      - python-backend
     networks:
       - diet-chart-network
     restart: unless-stopped

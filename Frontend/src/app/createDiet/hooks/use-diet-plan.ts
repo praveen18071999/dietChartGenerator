@@ -215,7 +215,7 @@ export function useDietPlan(dietId: { dietId: string }) {
       // Transform API response to our app format
       const transformedDietPlan = transformApiResponse(
         JSON.parse(
-          apiResponse.diet_plan
+          apiResponse.data.data.diet_plan
             .replace("json", "")
             .replace("```", "")
             .replace("```", "")

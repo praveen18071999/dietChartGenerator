@@ -18,6 +18,7 @@ interface MealSectionProps {
   onUpdateItem: (itemId: string, field: keyof MealItem, value: any) => void
   onAddToCart: (item: MealItem) => void
   calculateTotals: (items: MealItem[]) => { calories: number; protein: number; carbs: number; fats: number }
+  cartCounts: Record<string, number>
 }
 
 export function MealSection({
@@ -30,6 +31,7 @@ export function MealSection({
   onUpdateItem,
   onAddToCart,
   calculateTotals,
+  cartCounts={},
 }: MealSectionProps) {
   return (
     <div className="space-y-4">
@@ -46,7 +48,7 @@ export function MealSection({
             <h3 className="text-xl font-bold capitalize">{mealType}</h3>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Delivery Time:</span>
               <Select value={deliveryTime} onValueChange={onUpdateDeliveryTime}>
@@ -105,16 +107,16 @@ export function MealSection({
           </div>
         </div>
       </div>
-      <div className="rounded-lg border-2 overflow-hidden">
+      <div className="rounded-lg border-2 overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[250px] text-lg">Food Item</TableHead>
-              <TableHead className="text-lg">Quantity</TableHead>
-              <TableHead className="text-right text-lg">Calories</TableHead>
-              <TableHead className="text-right text-lg">Protein (g)</TableHead>
-              <TableHead className="text-right text-lg">Carbs (g)</TableHead>
-              <TableHead className="text-right text-lg">Fats (g)</TableHead>
+              <TableHead className="w-[250px] text-base md:text-lg">Food Item</TableHead>
+              <TableHead className="text-base md:text-lg">Quantity</TableHead>
+              <TableHead className="text-right text-base md:text-lg">Calories</TableHead>
+              <TableHead className="text-right text-base md:text-lg">Protein (g)</TableHead>
+              <TableHead className="text-right text-base md:text-lg">Carbs (g)</TableHead>
+              <TableHead className="text-right text-base md:text-lg">Fats (g)</TableHead>
               <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -125,14 +127,14 @@ export function MealSection({
                   <Input
                     value={item.name}
                     onChange={(e) => onUpdateItem(item.id, "name", e.target.value)}
-                    className="border-0 p-0 h-10 text-lg focus-visible:ring-0"
+                    className="border-0 p-0 h-10 text-base md:text-lg focus-visible:ring-0"
                   />
                 </TableCell>
                 <TableCell>
                   <Input
                     value={item.quantity}
                     onChange={(e) => onUpdateItem(item.id, "quantity", e.target.value)}
-                    className="border-0 p-0 h-10 text-lg focus-visible:ring-0 w-28"
+                    className="border-0 p-0 h-10 text-base md:text-lg focus-visible:ring-0 w-28"
                   />
                 </TableCell>
                 <TableCell className="text-right">
@@ -140,7 +142,7 @@ export function MealSection({
                     type="number"
                     value={item.calories}
                     onChange={(e) => onUpdateItem(item.id, "calories", Number.parseInt(e.target.value) || 0)}
-                    className="border-0 p-0 h-10 text-lg focus-visible:ring-0 w-20 text-right ml-auto"
+                    className="border-0 p-0 h-10 text-base md:text-lg focus-visible:ring-0 w-20 text-right ml-auto"
                   />
                 </TableCell>
                 <TableCell className="text-right">
@@ -148,7 +150,7 @@ export function MealSection({
                     type="number"
                     value={item.protein}
                     onChange={(e) => onUpdateItem(item.id, "protein", Number.parseInt(e.target.value) || 0)}
-                    className="border-0 p-0 h-10 text-lg focus-visible:ring-0 w-20 text-right ml-auto"
+                    className="border-0 p-0 h-10 text-base md:text-lg focus-visible:ring-0 w-20 text-right ml-auto"
                   />
                 </TableCell>
                 <TableCell className="text-right">
@@ -156,7 +158,7 @@ export function MealSection({
                     type="number"
                     value={item.carbs}
                     onChange={(e) => onUpdateItem(item.id, "carbs", Number.parseInt(e.target.value) || 0)}
-                    className="border-0 p-0 h-10 text-lg focus-visible:ring-0 w-20 text-right ml-auto"
+                    className="border-0 p-0 h-10 text-base md:text-lg focus-visible:ring-0 w-20 text-right ml-auto"
                   />
                 </TableCell>
                 <TableCell className="text-right">
@@ -164,7 +166,7 @@ export function MealSection({
                     type="number"
                     value={item.fats}
                     onChange={(e) => onUpdateItem(item.id, "fats", Number.parseInt(e.target.value) || 0)}
-                    className="border-0 p-0 h-10 text-lg focus-visible:ring-0 w-20 text-right ml-auto"
+                    className="border-0 p-0 h-10 text-base md:text-lg focus-visible:ring-0 w-20 text-right ml-auto"
                   />
                 </TableCell>
                 <TableCell>
@@ -173,10 +175,15 @@ export function MealSection({
                       variant="ghost"
                       size="icon"
                       onClick={() => onAddToCart(item)}
-                      className="h-10 w-10 rounded-full"
+                      className="h-10 w-10 rounded-full relative"
                       title="Add to cart"
                     >
                       <ShoppingCart className="h-5 w-5" />
+                      {cartCounts[item.id] && cartCounts[item.id] > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                          {cartCounts[item.id]}
+                        </span>
+                      )}
                     </Button>
                     <Button
                       variant="ghost"
@@ -193,19 +200,19 @@ export function MealSection({
             ))}
             {items.length > 0 && (
               <TableRow className={`${mealColors[mealType as keyof typeof mealColors].bg}`}>
-                <TableCell colSpan={2} className="font-bold text-lg">
+                <TableCell colSpan={2} className="font-bold text-base md:text-lg">
                   Total
                 </TableCell>
-                <TableCell className="text-right font-bold text-lg">{calculateTotals(items).calories}</TableCell>
-                <TableCell className="text-right font-bold text-lg">{calculateTotals(items).protein}g</TableCell>
-                <TableCell className="text-right font-bold text-lg">{calculateTotals(items).carbs}g</TableCell>
-                <TableCell className="text-right font-bold text-lg">{calculateTotals(items).fats}g</TableCell>
+                <TableCell className="text-right font-bold text-base md:text-lg">{calculateTotals(items).calories}</TableCell>
+                <TableCell className="text-right font-bold text-base md:text-lg">{calculateTotals(items).protein}g</TableCell>
+                <TableCell className="text-right font-bold text-base md:text-lg">{calculateTotals(items).carbs}g</TableCell>
+                <TableCell className="text-right font-bold text-base md:text-lg">{calculateTotals(items).fats}g</TableCell>
                 <TableCell></TableCell>
               </TableRow>
             )}
             {items.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-6 text-gray-500 text-lg">
+                <TableCell colSpan={7} className="text-center py-6 text-gray-500 text-base md:text-lg">
                   No items added. Click &quot;Add Item&quot; to add food to this meal.
                 </TableCell>
               </TableRow>
@@ -216,4 +223,3 @@ export function MealSection({
     </div>
   )
 }
-

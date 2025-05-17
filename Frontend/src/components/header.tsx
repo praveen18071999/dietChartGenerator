@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { useState, useEffect } from "react"
-import { ModeToggle } from "@/components/mode-toggle"
 import { Button } from "@/components/ui/button"
 import { Salad } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -29,7 +28,7 @@ export default function Header() {
       <div className="container mx-auto flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
           <Salad className="h-6 w-6 text-primary" />
-          <span className="text-xl font-bold tracking-tight">NutriAI</span>
+          <span className="text-xl font-bold tracking-tight">FitFuel</span>
         </div>
 
         <nav className="hidden md:flex gap-8">
@@ -45,7 +44,7 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-4">
-          <ModeToggle />
+          {/* ModeToggle removed from here */}
           <Button asChild className="hidden md:flex rounded-full">
             <Link href="#get-started">Get Started</Link>
           </Button>
@@ -124,4 +123,3 @@ export default function Header() {
     </header>
   )
 }
-

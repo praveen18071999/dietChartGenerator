@@ -202,9 +202,7 @@ export default function PaymentHistoryTable({ data, isLoading, selectedPayment, 
                 disabled={isLoading}
               />
             </div>
-            <Button variant="outline" disabled={isLoading}>
-              Export Data
-            </Button>
+            
           </div>
           <TableSkeleton />
         </CardContent>
@@ -237,7 +235,6 @@ export default function PaymentHistoryTable({ data, isLoading, selectedPayment, 
               </Button>
             )}
           </div>
-          <Button variant="outline">Export Data</Button>
         </div>
 
         <div className="rounded-md border overflow-hidden">
@@ -458,7 +455,7 @@ export default function PaymentHistoryTable({ data, isLoading, selectedPayment, 
             </Button>
 
             <div className="flex items-center gap-1 mx-2">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              {Array.from({ length: Math.min(1, totalPages) }, (_, i) => {
                 // Show pages around current page
                 let pageNum
                 if (totalPages <= 5) {

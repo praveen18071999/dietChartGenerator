@@ -11,7 +11,7 @@ export default function MedicalHistoryPage() {
   }
 
   return (
-    <div className="container p-20 md:py-10">
+    <div className="container p-20 md:py-10 justify-center items-center flex flex-col">
       <h1 className="text-3xl font-bold tracking-tight mb-6">Medical History</h1>
       <MedicalHistoryClient data={medicalHistoryData}/>
     </div>

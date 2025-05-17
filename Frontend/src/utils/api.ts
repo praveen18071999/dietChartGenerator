@@ -16,7 +16,7 @@ const API = {
     TRANSACTION_HISTORY: `${BASE_URL}/transaction/history`,
     DIET_NUTRITIONBREAKDOWN: `${BASE_URL}/diet/nutritionBreakdown`,
     CART_UPCOMINGDELIVERIES: `${BASE_URL}/cart/upcoming-deliveries`,
-    GENERATE_DIETPLAN: `http://104.248.229.28:8000/generate-diet-plan`,
+    GENERATE_DIETPLAN: `${BASE_URL}/dietGenerator/generateDiet`,
 
 }
 export default API;

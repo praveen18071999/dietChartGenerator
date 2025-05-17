@@ -40,7 +40,7 @@ export default function Footer() {
   ]
 
   return (
-    <footer className="w-full border-t bg-background/50 backdrop-blur-sm">
+    <footer className="w-full border-t bg-background/50 backdrop-blur-sm p-4">
       <div className="container flex flex-col gap-8 py-12">
         <div className="mx-auto flex flex-col gap-6 md:flex-row md:justify-between">
           <div className="flex flex-col gap-3 md:max-w-xs">
