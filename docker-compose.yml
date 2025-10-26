@@ -7,6 +7,8 @@ services:
       context: ./NestJSBackend/diet-chart-generator
       dockerfile: Dockerfile
     container_name: diet-chart-nestjs
+    env_file:
+      - ./.env
     environment:
       - NODE_ENV=production
       - PYTHON_API_URL=http://python-backend:8000
