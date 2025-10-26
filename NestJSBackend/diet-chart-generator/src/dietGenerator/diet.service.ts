@@ -15,7 +15,7 @@ export class DietService {
   async generateDietChart(dietRequest: any): Promise<any> {
     try {
       // Configure Google Generative AI with API key
-      const apiKey = 'AIzaSyDEog2TdCfQPOl-xfNH_5IidvCgONNVz5Y';
+      const apiKey = 'AIzaSyDWATeTSUWb2T80bH40cANs5qk3DMLRqx0';
       const googleGenerativeAI = new GoogleGenerativeAI(apiKey);
 
       // Prepare input text from request data
