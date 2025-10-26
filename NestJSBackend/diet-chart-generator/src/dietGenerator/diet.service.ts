@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
-// ADD THESE IMPORTS for safety settings
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import * as dotenv from 'dotenv';
 
@@ -14,6 +13,7 @@ export class DietService {
   private genAI: GoogleGenerativeAI;
 
   constructor() {
+    // FIX 1: REMOVE HARDCODED KEY. Use environment variables.
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       this.logger.error('FATAL: GEMINI_API_KEY is not set in environment variables. Check your .env file location.');
@@ -49,7 +49,6 @@ JSON structure:
         model: 'gemini-pro-latest',
       });
 
-      // FIX: Add safety settings to prevent blocking
       const safetySettings = [
         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
         { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -61,50 +60,47 @@ JSON structure:
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.5,
-          maxOutputTokens: 4096,
+          maxOutputTokens: 8192,
           responseMimeType: 'application/json',
         },
-        // Pass the safety settings with the request
         safetySettings,
       });
 
       const response = result.response;
 
-      // Better logging and error handling
       if (!response || !response.text()) {
         const finishReason = response?.candidates?.[0]?.finishReason;
         this.logger.error(`Gemini returned an empty response. Finish Reason: ${finishReason}`);
-        throw new HttpException(
-          `Failed to generate diet plan. The model returned an empty response, possibly due to safety filters. Reason: ${finishReason}`,
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
+        throw new HttpException(`Failed to generate diet plan. The model returned an empty response. Reason: ${finishReason}`, HttpStatus.INTERNAL_SERVER_ERROR);
       }
 
-      const responseData = JSON.parse(response.text());
-      const dailyTargets = responseData.daily_targets || {};
+      // FIX 2: CLEAN THE JSON before parsing to remove trailing commas.
+      const rawText = response.text();
+      const cleanedText = rawText.replace(/,\s*([}\]])/g, '$1'); // Removes trailing commas
 
-      return {
-        status: HttpStatus.OK,
-        message: 'Diet chart generated successfully',
-        data: {
-          diet_plan: JSON.stringify(responseData),
-          calories: dailyTargets.calories,
-          protein: dailyTargets.protein,
-          carbs: dailyTargets.carbs,
-          fats: dailyTargets.fats,
-        },
-      };
+      try {
+        const responseData = JSON.parse(cleanedText);
+        const dailyTargets = responseData.daily_targets || {};
+
+        return {
+          status: HttpStatus.OK,
+          message: 'Diet chart generated successfully',
+          data: {
+            diet_plan: JSON.stringify(responseData),
+            calories: dailyTargets.calories,
+            protein: dailyTargets.protein,
+            carbs: dailyTargets.carbs,
+            fats: dailyTargets.fats,
+          },
+        };
+      } catch (e) {
+        this.logger.error('Failed to parse cleaned JSON response from Gemini.', e.stack);
+        this.logger.log('Problematic cleaned text:', cleanedText); // Log the text that failed
+        throw new HttpException('Received an invalid format from the AI model after cleaning.', HttpStatus.INTERNAL_SERVER_ERROR);
+      }
     } catch (error) {
-      // Catch JSON parsing errors specifically
-      if (error instanceof SyntaxError) {
-        this.logger.error('Failed to parse JSON response from Gemini.', error.stack);
-        throw new HttpException('Received an invalid format from the AI model.', HttpStatus.INTERNAL_SERVER_ERROR);
-      }
       this.logger.error(`Error generating diet chart: ${error.message}`, error.stack);
-      throw new HttpException(
-        `Error generating diet plan: ${error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new HttpException(`Error generating diet plan: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }
