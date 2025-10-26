@@ -105,7 +105,7 @@ Ensure:
 
       // Make API call to Gemini
       const model = googleGenerativeAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'models/gemini-1.5-flash',
       });
       const result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
