@@ -15,7 +15,7 @@ export class DietService {
   async generateDietChart(dietRequest: any): Promise<any> {
     try {
       // Configure Google Generative AI with API key
-      const apiKey = 'AIzaSyDWATeTSUWb2T80bH40cANs5qk3DMLRqx0';
+      const apiKey = 'AIzaSyDmuFEpKERBmlfexku5e0bRf3PwTG7XLTE';
       const googleGenerativeAI = new GoogleGenerativeAI(apiKey);
 
       // Prepare input text from request data
@@ -105,7 +105,7 @@ Ensure:
 
       // Make API call to Gemini
       const model = googleGenerativeAI.getGenerativeModel({
-        model: 'models/gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
       });
       const result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
